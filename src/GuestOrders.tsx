@@ -86,7 +86,12 @@ export default function GuestOrders({ phone, onOpen, onExpired }: Props) {
                 (_, index) => `${item.id}-${index}` === order.artworkId,
               ),
             )
-            const item = order.snapshot ? { name: order.snapshot.product.name, img: order.snapshot.product.image } : project?.goods[Number(order.artworkId.split("-")[1])]
+            const item = order.snapshot
+              ? {
+                  name: order.snapshot.product.name,
+                  img: order.snapshot.product.image,
+                }
+              : project?.goods[Number(order.artworkId.split("-")[1])]
             return (
               <button
                 key={order.id}
@@ -94,13 +99,21 @@ export default function GuestOrders({ phone, onOpen, onExpired }: Props) {
                 onClick={() => onOpen(order)}
               >
                 <div className="order-card-top">
-                  <span>{order.snapshot ? '저장된 주문' : order.simulated ? '주문 접수' : '결제 완료'}</span>
+                  <span>
+                    {order.snapshot
+                      ? "저장된 주문"
+                      : order.simulated
+                        ? "주문 접수"
+                        : "결제 완료"}
+                  </span>
                   <small>{order.id}</small>
                 </div>
                 <div className="order-product">
                   {item?.img && <img src={item.img} alt={item.name} />}
                   <div>
-                    {order.snapshot && <small>{order.snapshot.store.name}</small>}
+                    {order.snapshot && (
+                      <small>{order.snapshot.store.name}</small>
+                    )}
                     <strong>{item?.name || "주문 작품"}</strong>
                     <p>
                       {order.quantity}개 ·{" "}

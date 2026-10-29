@@ -1,5 +1,5 @@
-import { presentationRequest } from './presentation';
-import { validateSnapshot, type QrSnapshot } from './qrSnapshot';
+import { presentationRequest } from "./presentation"
+import { validateSnapshot, type QrSnapshot } from "./qrSnapshot"
 
 const environment = (import.meta as ImportMeta & {
   env: Record<string, string | undefined>
@@ -57,8 +57,17 @@ export function readPaidOrder(value: unknown): PaidOrder {
       "결제 완료를 확인하지 못했어요. 주문 내역에서 상태를 확인하거나 매장에 문의해 주세요.",
     )
   }
-  const snapshot = order.snapshot === undefined ? undefined : validateSnapshot(order.snapshot);
-  if (snapshot && (order.storeId !== snapshot.storeId || order.requestId !== snapshot.requestId || order.artworkId !== snapshot.product.artworkId || order.amount !== snapshot.product.price * Number(order.quantity) || Number(order.quantity) > snapshot.product.stock)) throw new Error('저장된 주문 정보가 일치하지 않아요.');
+  const snapshot =
+    order.snapshot === undefined ? undefined : validateSnapshot(order.snapshot)
+  if (
+    snapshot &&
+    (order.storeId !== snapshot.storeId ||
+      order.requestId !== snapshot.requestId ||
+      order.artworkId !== snapshot.product.artworkId ||
+      order.amount !== snapshot.product.price * Number(order.quantity) ||
+      Number(order.quantity) > snapshot.product.stock)
+  )
+    throw new Error("저장된 주문 정보가 일치하지 않아요.")
   return {
     v: order.v === 1 ? 1 : undefined,
     id: order.id,
@@ -70,7 +79,8 @@ export function readPaidOrder(value: unknown): PaidOrder {
     snapshot,
     storeId: snapshot?.storeId,
     requestId: snapshot?.requestId,
-    customerLabel: typeof order.customerLabel === 'string' ? order.customerLabel : undefined,
+    customerLabel:
+      typeof order.customerLabel === "string" ? order.customerLabel : undefined,
     simulated: order.simulated === true,
     pickupMode:
       order.pickupMode === "exhibition"

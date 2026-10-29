@@ -13,6 +13,7 @@ export function readQrToken(pathname = window.location.pathname) {
 }
 
 export function qrPath(token: string) {
-  if (!TOKEN_PATTERN.test(token)) throw new Error("QR 토큰 형식이 올바르지 않아요.")
+  if (!TOKEN_PATTERN.test(token))
+    throw new Error("QR 토큰 형식이 올바르지 않아요.")
   return `/q/${encodeURIComponent(token)}`
 }

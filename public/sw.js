@@ -1,4 +1,4 @@
-const CACHE = "curit-qr-v1"
+const CACHE = "curit-qr-v2"
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches

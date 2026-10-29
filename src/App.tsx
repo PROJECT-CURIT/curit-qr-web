@@ -14,7 +14,7 @@ import {
 import GuestAccess from "./GuestAccess"
 import GuestOrders from "./GuestOrders"
 import PaymentSelect from "./PaymentSelect"
-import { purchaseIssue, type QrSnapshot } from './qrSnapshot'
+import { purchaseIssue, type QrSnapshot } from "./qrSnapshot"
 import { qrPath, readQrToken } from "./qrToken"
 
 const money = (value: number) => value.toLocaleString("ko-KR") + "원"
@@ -25,10 +25,12 @@ const catalog = projects.flatMap((project) =>
     project,
   })),
 )
-function Icon({ name, size = 20 }: {
+type IconProps = {
   name: string
   size?: number
-}) {
+}
+
+function Icon({ name, size = 20 }: IconProps) {
   const paths: Record<string, string> = {
     back: "M15 5l-7 7 7 7",
     receipt: "M6 3h12v18l-3-2-3 2-3-2-3 2V3Zm3 4h6M9 11h6M9 15h3",
@@ -72,11 +74,27 @@ export default function App() {
   const initialId =
     new URLSearchParams(window.location.search).get("artwork") || "0-0"
   const [productId, setProductId] = useState(initialId)
-  const product = snapshot ? {
-    id: snapshot.product.artworkId,
-    name: snapshot.product.name, price: snapshot.product.price, stock: snapshot.product.stock, img: snapshot.product.image,
-    project: { ...projects[0], id: snapshot.product.projectId, title: snapshot.project?.title || '', artist: snapshot.product.artist, handle: snapshot.creator?.handle || '', location: snapshot.creator?.regions.join(' · ') || '', desc: snapshot.product.description, tags: snapshot.creator?.categories || [], dna: { ...projects[0].dna, materials: [] }, installNote: snapshot.product.care },
-  } : catalog.find((item) => item.id === productId)
+  const product = snapshot
+    ? {
+        id: snapshot.product.artworkId,
+        name: snapshot.product.name,
+        price: snapshot.product.price,
+        stock: snapshot.product.stock,
+        img: snapshot.product.image,
+        project: {
+          ...projects[0],
+          id: snapshot.product.projectId,
+          title: snapshot.project?.title || "",
+          artist: snapshot.product.artist,
+          handle: snapshot.creator?.handle || "",
+          location: snapshot.creator?.regions.join(" · ") || "",
+          desc: snapshot.product.description,
+          tags: snapshot.creator?.categories || [],
+          dna: { ...projects[0].dna, materials: [] },
+          installNote: snapshot.product.care,
+        },
+      }
+    : catalog.find((item) => item.id === productId)
   const [stage, setStage] =
     useState<"detail" | "checkout" | "complete" | "confirming">("detail")
   const [quantity, setQuantity] = useState(1)
@@ -84,7 +102,9 @@ export default function App() {
   const [payment, setPayment] = useState("카드 결제")
   const [agreed, setAgreed] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [checkoutReview, setCheckoutReview] = useState<{ name: string } | null>(null)
+  const [checkoutReview, setCheckoutReview] = useState<{ name: string } | null>(
+    null,
+  )
   const [toast, setToast] = useState("")
   const [confirmedOrder, setConfirmedOrder] = useState<PaidOrder | null>(null)
   const [phone, setPhone] = useState("")
@@ -200,8 +220,19 @@ export default function App() {
       setOrdersOpen(false)
     }
     window.addEventListener("popstate", handlePop)
-    if ("serviceWorker" in navigator)
-      navigator.serviceWorker.register("/sw.js").catch(() => {})
+    if ("serviceWorker" in navigator) {
+      if (import.meta.env.PROD)
+        navigator.serviceWorker.register("/sw.js").catch(() => {})
+      else
+        navigator.serviceWorker
+          .getRegistrations()
+          .then((registrations) =>
+            Promise.all(
+              registrations.map((registration) => registration.unregister()),
+            ),
+          )
+          .catch(() => {})
+    }
     return () => {
       window.removeEventListener("popstate", handlePop)
     }
@@ -227,7 +258,12 @@ export default function App() {
   }, [gallery])
   useEffect(() => {
     const order = new URLSearchParams(window.location.search).get("order")
-    if (listingStatus === "error" || sessionStatus !== "verified" || !order || confirmationStarted.current)
+    if (
+      listingStatus === "error" ||
+      sessionStatus !== "verified" ||
+      !order ||
+      confirmationStarted.current
+    )
       return
     confirmationStarted.current = true
     setStage("confirming")
@@ -236,8 +272,20 @@ export default function App() {
     commerceRequest("/api/orders/" + encodeURIComponent(order))
       .then((result) => {
         const confirmed = readPaidOrder(result)
-        if (snapshot && (!confirmed.snapshot || confirmed.storeId !== snapshot.storeId || confirmed.requestId !== snapshot.requestId || confirmed.artworkId !== snapshot.product.artworkId)) throw new Error('이 구매 링크의 매장·상품과 주문 내역이 일치하지 않아요.')
-        if (!confirmed.snapshot && !catalog.some((item) => item.id === confirmed.artworkId))
+        if (
+          snapshot &&
+          (!confirmed.snapshot ||
+            confirmed.storeId !== snapshot.storeId ||
+            confirmed.requestId !== snapshot.requestId ||
+            confirmed.artworkId !== snapshot.product.artworkId)
+        )
+          throw new Error(
+            "이 구매 링크의 매장·상품과 주문 내역이 일치하지 않아요.",
+          )
+        if (
+          !confirmed.snapshot &&
+          !catalog.some((item) => item.id === confirmed.artworkId)
+        )
           throw new Error("작품 정보를 찾지 못했어요. 매장에 문의해 주세요.")
         setSnapshot(confirmed.snapshot || null)
         setConfirmedOrder(confirmed)
@@ -256,7 +304,13 @@ export default function App() {
         setPaymentError(error.message)
       })
       .finally(() => setBusy(false))
-  }, [sessionStatus, expireSession, confirmationAttempt, listingStatus, snapshot])
+  }, [
+    sessionStatus,
+    expireSession,
+    confirmationAttempt,
+    listingStatus,
+    snapshot,
+  ])
   const navigate = (next: typeof stage) => {
     setStage(next)
     setOrdersOpen(false)
@@ -271,7 +325,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "instant" })
   }
   const selectProduct = (id: string) => {
-    if (snapshot) return;
+    if (snapshot) return
     setProductId(id)
     setQuantity(1)
     setGallery(false)
@@ -294,8 +348,21 @@ export default function App() {
     }
   }
   if (listingStatus === "loading")
-    return <main className="not-found"><div className="session-loading" role="status"><span className="loading-spinner" />작품 정보를 불러오고 있어요.</div></main>
-  if (listingStatus === "error") return <main className="not-found"><h1>구매 링크를 확인해 주세요</h1><p role="alert">{listingError}</p></main>
+    return (
+      <main className="not-found">
+        <div className="session-loading" role="status">
+          <span className="loading-spinner" />
+          작품 정보를 불러오고 있어요.
+        </div>
+      </main>
+    )
+  if (listingStatus === "error")
+    return (
+      <main className="not-found">
+        <h1>구매 링크를 확인해 주세요</h1>
+        <p role="alert">{listingError}</p>
+      </main>
+    )
   if (accessIntent)
     return (
       <GuestAccess
@@ -315,11 +382,21 @@ export default function App() {
       </main>
     )
   const total = product.price * quantity
-  const artworkPickup = snapshot ? { cafe: snapshot.store.name, phone: snapshot.store.phone, exhibitionEnd: snapshot.product.exhibitionEnd, mode: snapshot.product.pickupMode } : pickupForArtwork(product.id)
+  const artworkPickup = snapshot
+    ? {
+        cafe: snapshot.store.name,
+        phone: snapshot.store.phone,
+        exhibitionEnd: snapshot.product.exhibitionEnd,
+        mode: snapshot.product.pickupMode,
+      }
+    : pickupForArtwork(product.id)
   const pickup =
     stage === "complete" && confirmedOrder
       ? {
-          cafe: (confirmedOrder.cafeName === "전시 카페" ? artworkPickup.cafe : confirmedOrder.cafeName) || artworkPickup.cafe,
+          cafe:
+            (confirmedOrder.cafeName === "전시 카페"
+              ? artworkPickup.cafe
+              : confirmedOrder.cafeName) || artworkPickup.cafe,
           phone: confirmedOrder.cafePhone || artworkPickup.phone,
           exhibitionEnd:
             confirmedOrder.pickupDate || artworkPickup.exhibitionEnd,
@@ -328,16 +405,41 @@ export default function App() {
       : artworkPickup
   const isExhibition = pickup.mode === "exhibition"
   const story = snapshot ? undefined : artistStories[product.project.id ?? -1]
-  const detail = snapshot ? { description: snapshot.product.description, composition: snapshot.product.composition, care: snapshot.product.care, tags: snapshot.creator?.categories || [], beginning: '', concept: snapshot.project?.concept || '', quote: '' } : productDetails[product.id]
-  const issue = purchaseIssue(snapshot, product.stock, quantity, artworkPickup.mode, artworkPickup.exhibitionEnd)
-  const activeTab = snapshot && tab === '작품 이야기' && !snapshot.project?.concept && !snapshot.product.description ? '상품 정보' : tab
+  const detail = snapshot
+    ? {
+        description: snapshot.product.description,
+        composition: snapshot.product.composition,
+        care: snapshot.product.care,
+        tags: snapshot.creator?.categories || [],
+        beginning: "",
+        concept: snapshot.project?.concept || "",
+        quote: "",
+      }
+    : productDetails[product.id]
+  const issue = purchaseIssue(
+    snapshot,
+    product.stock,
+    quantity,
+    artworkPickup.mode,
+    artworkPickup.exhibitionEnd,
+  )
+  const activeTab =
+    snapshot &&
+    tab === "작품 이야기" &&
+    !snapshot.project?.concept &&
+    !snapshot.product.description
+      ? "상품 정보"
+      : tab
   const pickupText = isExhibition
     ? "전시 종료 후 현장 수령"
     : "결제 후 현장 수령"
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (busy || !agreed) return
-    if (issue) { setPaymentError(issue); return; }
+    if (issue) {
+      setPaymentError(issue)
+      return
+    }
     setPaymentError("")
     if (!verifiedPhone || verifiedPhone !== phone) {
       setPaymentError("주문 안내를 위해 휴대폰 인증을 완료해 주세요.")
@@ -353,13 +455,19 @@ export default function App() {
       return
     }
     const data = new FormData(event.currentTarget)
-    const name = String(data.get('name') || '')
-    if (isPresentation) { setCheckoutReview({ name }); return; }
+    const name = String(data.get("name") || "")
+    if (isPresentation) {
+      setCheckoutReview({ name })
+      return
+    }
     await beginCheckout(name)
   }
   const beginCheckout = async (name: string) => {
-    if (busy || checkoutStarted.current) return;
-    if (issue) { setPaymentError(issue); return; }
+    if (busy || checkoutStarted.current) return
+    if (issue) {
+      setPaymentError(issue)
+      return
+    }
     checkoutStarted.current = true
     setBusy(true)
     try {
@@ -377,7 +485,8 @@ export default function App() {
               ? "kakaopay"
               : "tosspay",
         cardIssuer: payment === "카드 결제" ? card : undefined,
-        installment: payment === "카드 결제" && total >= 50000 ? installment : "0",
+        installment:
+          payment === "카드 결제" && total >= 50000 ? installment : "0",
         returnUrl: qrToken
           ? window.location.origin + qrPath(qrToken)
           : window.location.origin + "/?artwork=" + product.id,
@@ -398,9 +507,41 @@ export default function App() {
   return (
     <div className={`app app-${ordersOpen ? "orders" : stage}`}>
       <header className="header app-navigation">
-        {(stage !== 'detail' || ordersOpen) && <button className="icon-button header-back" aria-label={ordersOpen ? '이전 화면으로 돌아가기' : '작품으로 돌아가기'} onClick={() => ordersOpen ? setOrdersOpen(false) : navigate('detail')}><Icon name="back" /></button>}
-        <button className="wordmark" onClick={() => navigate('detail')} aria-label="큐릿 작품 상세"><span className="brand-logo" aria-hidden="true">CURI:T</span></button>
-        <button className="order-history-link" onClick={() => { if (sessionStatus === 'verified') setOrdersOpen(true); else setAccessIntent('orders'); window.scrollTo(0, 0); }} aria-label="나의 주문 내역" aria-current={ordersOpen ? 'page' : undefined}><Icon name="receipt" size={18} /><span>주문 내역</span></button>
+        {(stage !== "detail" || ordersOpen) && (
+          <button
+            className="icon-button header-back"
+            aria-label={
+              ordersOpen ? "이전 화면으로 돌아가기" : "작품으로 돌아가기"
+            }
+            onClick={() =>
+              ordersOpen ? setOrdersOpen(false) : navigate("detail")
+            }
+          >
+            <Icon name="back" />
+          </button>
+        )}
+        <button
+          className="wordmark"
+          onClick={() => navigate("detail")}
+          aria-label="큐릿 작품 상세"
+        >
+          <span className="brand-logo" aria-hidden="true">
+            CURI:T
+          </span>
+        </button>
+        <button
+          className="order-history-link"
+          onClick={() => {
+            if (sessionStatus === "verified") setOrdersOpen(true)
+            else setAccessIntent("orders")
+            window.scrollTo(0, 0)
+          }}
+          aria-label="나의 주문 내역"
+          aria-current={ordersOpen ? "page" : undefined}
+        >
+          <Icon name="receipt" size={18} />
+          <span>주문 내역</span>
+        </button>
       </header>
       {!ordersOpen && stage === "checkout" && (
         <div className="page-heading">
@@ -412,7 +553,10 @@ export default function App() {
           phone={verifiedPhone}
           onExpired={expireSession}
           onOpen={(order) => {
-            if (!order.snapshot && !catalog.some((item) => item.id === order.artworkId)) {
+            if (
+              !order.snapshot &&
+              !catalog.some((item) => item.id === order.artworkId)
+            ) {
               setToast("작품 정보를 찾지 못했어요. 매장에 문의해 주세요.")
               return
             }
@@ -425,9 +569,12 @@ export default function App() {
             window.history.replaceState(
               {},
               "",
-              (qrToken ? qrPath(qrToken) : "?artwork=" + encodeURIComponent(order.artworkId)) +
+              (qrToken
+                ? qrPath(qrToken)
+                : "?artwork=" + encodeURIComponent(order.artworkId)) +
                 (qrToken ? "?" : "&") +
-                "order=" + encodeURIComponent(order.id),
+                "order=" +
+                encodeURIComponent(order.id),
             )
             window.scrollTo(0, 0)
           }}
@@ -437,33 +584,47 @@ export default function App() {
         <main>
           <div className="detail-grid">
             <div className="visual">
-              {product.img && <img
-                className="hero-image"
-                src={product.img}
-                alt={`${product.name} — ${product.project.artist}의 작품`}
-              />}
-              {!snapshot && <button
-                className="hero-back icon-button"
-                aria-label="다른 작품 보기"
-                onClick={() => setGallery(true)}
-              >
-                <Icon name="gallery" />
-              </button>}
+              {product.img && (
+                <img
+                  className="hero-image"
+                  src={product.img}
+                  alt={`${product.name} — ${product.project.artist}의 작품`}
+                />
+              )}
+              {!snapshot && (
+                <button
+                  className="hero-back icon-button"
+                  aria-label="다른 작품 보기"
+                  onClick={() => setGallery(true)}
+                >
+                  <Icon name="gallery" />
+                </button>
+              )}
               <div className="hero-copy">
-                <span className="hero-badge">{snapshot?.saleStatus === 'preparing' ? '판매 준비 중' : product.stock === 0 ? '품절' : '전시·판매 중'}</span>
+                <span className="hero-badge">
+                  {snapshot?.saleStatus === "preparing"
+                    ? "판매 준비 중"
+                    : product.stock === 0
+                      ? "품절"
+                      : "전시·판매 중"}
+                </span>
                 <h1>{product.name}</h1>
-                {(detail?.description || product.project.desc) && <p>{detail?.description || product.project.desc}</p>}
+                {(detail?.description || product.project.desc) && (
+                  <p>{detail?.description || product.project.desc}</p>
+                )}
               </div>
             </div>
             <div className="product-intro">
               <div className="eyebrow">
                 <span>
-                  {snapshot ? snapshot.creator?.categories.join(' · ') : product.project.id === 1
-                    ? "판화"
-                    : product.project.id === 2
-                      ? "패브릭"
-                      : "도예"}
-                  {!snapshot && ' · 아트 & 라이프'}
+                  {snapshot
+                    ? snapshot.creator?.categories.join(" · ")
+                    : product.project.id === 1
+                      ? "판화"
+                      : product.project.id === 2
+                        ? "패브릭"
+                        : "도예"}
+                  {!snapshot && " · 아트 & 라이프"}
                 </span>
                 <button
                   className="icon-button"
@@ -486,13 +647,31 @@ export default function App() {
                 </span>
                 <span>
                   <strong>{product.project.artist}</strong>
-                  {(product.project.handle || (!snapshot && product.project.location)) && <small>{[product.project.handle, snapshot ? snapshot.creator?.regions.join(' · ') : product.project.location].filter(Boolean).join(' · ')}</small>}
+                  {(product.project.handle ||
+                    (!snapshot && product.project.location)) && (
+                    <small>
+                      {[
+                        product.project.handle,
+                        snapshot
+                          ? snapshot.creator?.regions.join(" · ")
+                          : product.project.location,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </small>
+                  )}
                 </span>
                 <Icon name="arrow" size={17} />
               </button>
               <div className="price-row">
                 <strong>{money(product.price)}</strong>
-                <span className="stock-badge">{snapshot?.saleStatus === 'preparing' ? '판매 준비 중' : product.stock < 1 ? '품절' : '구매 가능'}</span>
+                <span className="stock-badge">
+                  {snapshot?.saleStatus === "preparing"
+                    ? "판매 준비 중"
+                    : product.stock < 1
+                      ? "품절"
+                      : "구매 가능"}
+                </span>
               </div>
               <div className="tags">
                 {(detail?.tags || product.project.tags).map((tag) => (
@@ -535,7 +714,15 @@ export default function App() {
           <div className="content-grid">
             <div>
               <nav className="tabs" aria-label="작품 정보">
-                {[...(snapshot && !snapshot.project?.concept && !snapshot.product.description ? [] : ['작품 이야기']), "상품 정보", "수령 · 교환"].map((label) => (
+                {[
+                  ...(snapshot &&
+                  !snapshot.project?.concept &&
+                  !snapshot.product.description
+                    ? []
+                    : ["작품 이야기"]),
+                  "상품 정보",
+                  "수령 · 교환",
+                ].map((label) => (
                   <button
                     key={label}
                     className={activeTab === label ? "active" : ""}
@@ -547,21 +734,39 @@ export default function App() {
               </nav>
               {activeTab === "작품 이야기" ? (
                 <section className="story">
-                  {snapshot ? <>{snapshot.product.description && <p className="story-lead">{snapshot.product.description}</p>}{snapshot.project?.concept && <><h2 className="story-label">작품에 담긴 이야기</h2><p>{snapshot.project.concept}</p></>}</> : <>
-                  <h2 className="story-label">시작한 이유</h2>
-                  <p className="story-lead">{detail?.beginning || story?.beginning}</p>
-                  <div className="story-divider" />
-                  <h2 className="story-label">작품에 담긴 이야기</h2>
-                  <p>{detail?.concept || story?.concept}</p>
-                  <blockquote>
-                    “{detail?.quote || product.project.desc}”
-                    <cite>— {product.project.artist} 작가</cite>
-                  </blockquote>
-                  <div className="story-footer">
-                    <Icon name="leaf" size={18} />
-                    <span>일상에 스며드는 작은 예술.</span>
-                  </div>
-                  </>}
+                  {snapshot ? (
+                    <>
+                      {snapshot.product.description && (
+                        <p className="story-lead">
+                          {snapshot.product.description}
+                        </p>
+                      )}
+                      {snapshot.project?.concept && (
+                        <>
+                          <h2 className="story-label">작품에 담긴 이야기</h2>
+                          <p>{snapshot.project.concept}</p>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="story-label">시작한 이유</h2>
+                      <p className="story-lead">
+                        {detail?.beginning || story?.beginning}
+                      </p>
+                      <div className="story-divider" />
+                      <h2 className="story-label">작품에 담긴 이야기</h2>
+                      <p>{detail?.concept || story?.concept}</p>
+                      <blockquote>
+                        “{detail?.quote || product.project.desc}”
+                        <cite>— {product.project.artist} 작가</cite>
+                      </blockquote>
+                      <div className="story-footer">
+                        <Icon name="leaf" size={18} />
+                        <span>일상에 스며드는 작은 예술.</span>
+                      </div>
+                    </>
+                  )}
                 </section>
               ) : activeTab !== "수령 · 교환" ? (
                 <section className="info-section">
@@ -572,19 +777,28 @@ export default function App() {
                       ["작가", product.project.artist],
                       ["시리즈", product.project.title],
                       ...(detail ? [["구성", detail.composition]] : []),
-                      ...(!snapshot ? [["재료", product.project.dna.materials.join(" · ")]] : []),
-                      ["보관 안내", detail?.care || product.project.installNote],
-                    ].filter(([, value]) => value?.trim()).map(([label, value]) => (
-                      <div key={label}>
-                        <dt>{label}</dt>
-                        <dd>{value}</dd>
-                      </div>
-                    ))}
+                      ...(!snapshot
+                        ? [["재료", product.project.dna.materials.join(" · ")]]
+                        : []),
+                      [
+                        "보관 안내",
+                        detail?.care || product.project.installNote,
+                      ],
+                    ]
+                      .filter(([, value]) => value?.trim())
+                      .map(([label, value]) => (
+                        <div key={label}>
+                          <dt>{label}</dt>
+                          <dd>{value}</dd>
+                        </div>
+                      ))}
                   </dl>
-                  {!snapshot && <p>
-                    수작업으로 만든 작품은 형태와 색감에 자연스러운 차이가 있을
-                    수 있습니다.
-                  </p>}
+                  {!snapshot && (
+                    <p>
+                      수작업으로 만든 작품은 형태와 색감에 자연스러운 차이가
+                      있을 수 있습니다.
+                    </p>
+                  )}
                 </section>
               ) : (
                 <section className="info-section">
@@ -607,59 +821,95 @@ export default function App() {
                         카페 문의 · {pickup.phone}
                       </a>
                     )}
-                    {snapshot?.store.address && <p>주소 · {snapshot.store.address}</p>}
-                    {snapshot?.store.hours && <p>운영 시간 · {snapshot.store.hours}</p>}
+                    {snapshot?.store.address && (
+                      <p>주소 · {snapshot.store.address}</p>
+                    )}
+                    {snapshot?.store.hours && (
+                      <p>운영 시간 · {snapshot.store.hours}</p>
+                    )}
                   </details>
                   <details>
                     <summary>교환 · 반품</summary>
                     <p>
-                      상품에 문제가 있다면 주문 번호와 함께 카페에 문의해 주세요. 교환·반품은 관련 법령에 따라 처리됩니다.
+                      상품에 문제가 있다면 주문 번호와 함께 카페에 문의해
+                      주세요. 교환·반품은 관련 법령에 따라 처리됩니다.
                     </p>
                   </details>
                 </section>
               )}
-              {(!snapshot || snapshot.creator) && <section className="artist-card" id="artist">
-                <span className="avatar large">
-                  {product.project.artist.slice(0, 1)}
-                </span>
-                <div>
-                  <span className="section-kicker">MEET THE ARTIST</span>
-                  <h3>{snapshot?.creator?.name || product.project.artist} 작가</h3>
-                  {snapshot ? <>{snapshot.creator?.handle && <p>{snapshot.creator.handle}</p>}{snapshot.creator?.introduction && <p>{snapshot.creator.introduction}</p>}{snapshot.creator?.description && <p>{snapshot.creator.description}</p>}{!!snapshot.creator?.regions.length && <p>{snapshot.creator.regions.join(' · ')}</p>}</> : <p>{product.project.id === 0 ? '제주의 흙과 계절을 일상의 그릇에 담습니다.' : product.project.desc}</p>}
-                </div>
-              </section>}
+              {(!snapshot || snapshot.creator) && (
+                <section className="artist-card" id="artist">
+                  <span className="avatar large">
+                    {product.project.artist.slice(0, 1)}
+                  </span>
+                  <div>
+                    <span className="section-kicker">MEET THE ARTIST</span>
+                    <h3>
+                      {snapshot?.creator?.name || product.project.artist} 작가
+                    </h3>
+                    {snapshot ? (
+                      <>
+                        {snapshot.creator?.handle && (
+                          <p>{snapshot.creator.handle}</p>
+                        )}
+                        {snapshot.creator?.introduction && (
+                          <p>{snapshot.creator.introduction}</p>
+                        )}
+                        {snapshot.creator?.description && (
+                          <p>{snapshot.creator.description}</p>
+                        )}
+                        {!!snapshot.creator?.regions.length && (
+                          <p>{snapshot.creator.regions.join(" · ")}</p>
+                        )}
+                      </>
+                    ) : (
+                      <p>
+                        {product.project.id === 0
+                          ? "제주의 흙과 계절을 일상의 그릇에 담습니다."
+                          : product.project.desc}
+                      </p>
+                    )}
+                  </div>
+                </section>
+              )}
             </div>
             <aside className="related">
-              {!snapshot && <><div className="section-title">
-                <h3>같은 작가의 다른 작품</h3>
-                <button className="text-link" onClick={() => setGallery(true)}>
-                  함께 만나보세요 <Icon name="arrow" size={14} />
-                </button>
-              </div>
-              <div className="related-list">
-                {catalog
-                  .filter(
-                    (item) =>
-                      item.project.id === product.project.id &&
-                      item.id !== product.id,
-                  )
-                  .map((item) => (
+              {!snapshot && (
+                <>
+                  <div className="section-title">
+                    <h3>같은 작가의 다른 작품</h3>
                     <button
-                      key={item.id}
-                      className="related-item"
-                      onClick={() => selectProduct(item.id)}
+                      className="text-link"
+                      onClick={() => setGallery(true)}
                     >
-                      <img src={item.img} alt={item.name} loading="lazy" />
-                      <span>
-                        <small>{item.project.title}</small>
-                        <strong>{item.name}</strong>
-                        <b>{money(item.price)}</b>
-                      </span>
-                      <Icon name="arrow" size={18} />
+                      함께 만나보세요 <Icon name="arrow" size={14} />
                     </button>
-                  ))}
-              </div>
-              </>}
+                  </div>
+                  <div className="related-list">
+                    {catalog
+                      .filter(
+                        (item) =>
+                          item.project.id === product.project.id &&
+                          item.id !== product.id,
+                      )
+                      .map((item) => (
+                        <button
+                          key={item.id}
+                          className="related-item"
+                          onClick={() => selectProduct(item.id)}
+                        >
+                          <img src={item.img} alt={item.name} loading="lazy" />
+                          <span>
+                            <small>{item.project.title}</small>
+                            <strong>{item.name}</strong>
+                            <b>{money(item.price)}</b>
+                          </span>
+                          <Icon name="arrow" size={18} />
+                        </button>
+                      ))}
+                  </div>
+                </>
+              )}
               <div className="brand-note">
                 <Icon name="leaf" />
                 <strong>공간과 예술 사이, 큐릿</strong>
@@ -672,7 +922,9 @@ export default function App() {
             </aside>
           </div>
           <footer className="footer">
-            <span className="footer-brand-logo" aria-label="큐릿">CURI:T</span>
+            <span className="footer-brand-logo" aria-label="큐릿">
+              CURI:T
+            </span>
             <span>예술이 일상이 되는 순간</span>
           </footer>
           <div className="purchase-bar">
@@ -680,11 +932,30 @@ export default function App() {
               <small>총 작품 금액</small>
               <strong>{money(product.price * quantity)}</strong>
             </div>
-            <button className="primary" disabled={!!issue} onClick={() => sessionStatus === 'verified' ? navigate("checkout") : setAccessIntent("checkout")}>
-              {issue ? (snapshot?.saleStatus === 'preparing' ? '판매 준비 중' : product.stock < 1 ? '품절' : '주문 불가') : '주문하기'} <Icon name="arrow" size={19} />
+            <button
+              className="primary"
+              disabled={!!issue}
+              onClick={() =>
+                sessionStatus === "verified"
+                  ? navigate("checkout")
+                  : setAccessIntent("checkout")
+              }
+            >
+              {issue
+                ? snapshot?.saleStatus === "preparing"
+                  ? "판매 준비 중"
+                  : product.stock < 1
+                    ? "품절"
+                    : "주문 불가"
+                : "주문하기"}{" "}
+              <Icon name="arrow" size={19} />
             </button>
           </div>
-          {issue && <p className="payment-error" role="status">{issue}</p>}
+          {issue && (
+            <p className="payment-error" role="status">
+              {issue}
+            </p>
+          )}
         </main>
       )}
       {!ordersOpen && stage === "checkout" && (
@@ -730,8 +1001,12 @@ export default function App() {
                       <span className="pickup-place">
                         {pickup.cafe} · 현장 수령 무료
                       </span>
-                      {snapshot?.store.address && <p>{snapshot.store.address}</p>}
-                      {snapshot?.store.hours && <p>운영 시간 · {snapshot.store.hours}</p>}
+                      {snapshot?.store.address && (
+                        <p>{snapshot.store.address}</p>
+                      )}
+                      {snapshot?.store.hours && (
+                        <p>운영 시간 · {snapshot.store.hours}</p>
+                      )}
                       {isExhibition && (
                         <div className="exhibition-info">
                           <p>
@@ -739,9 +1014,7 @@ export default function App() {
                             {pickup.exhibitionEnd ||
                               "매장에 일정 확인 후 예약해 주세요"}
                           </p>
-                          <p>
-                            이른 수령은 구매 전 카페에 문의해 주세요.
-                          </p>
+                          <p>이른 수령은 구매 전 카페에 문의해 주세요.</p>
                           {pickup.phone ? (
                             <a href={"tel:" + pickup.phone}>
                               <Icon name="phone" size={16} /> 카페 연락하기 ·{" "}
@@ -798,10 +1071,43 @@ export default function App() {
                   </div>
                   {payment === "카드 결제" ? (
                     <div className="card-options">
-                      <PaymentSelect label="카드사 선택" value={card} onChange={setCard} placeholder="결제할 카드사를 선택해 주세요" options={['신한','KB국민','삼성','현대','롯데','우리','하나','NH농협','BC'].map(issuer => ({ value: issuer, label: issuer + '카드' }))} />
-                      <PaymentSelect label="할부 선택" value={total < 50000 ? '0' : installment} onChange={setInstallment} options={[{ value: '0', label: '일시불' }, ...(total >= 50000 ? [2,3,6,12].map(months => ({ value: String(months), label: months + '개월' })) : [])]} />
+                      <PaymentSelect
+                        label="카드사 선택"
+                        value={card}
+                        onChange={setCard}
+                        placeholder="결제할 카드사를 선택해 주세요"
+                        options={[
+                          "신한",
+                          "KB국민",
+                          "삼성",
+                          "현대",
+                          "롯데",
+                          "우리",
+                          "하나",
+                          "NH농협",
+                          "BC",
+                        ].map((issuer) => ({
+                          value: issuer,
+                          label: issuer + "카드",
+                        }))}
+                      />
+                      <PaymentSelect
+                        label="할부 선택"
+                        value={total < 50000 ? "0" : installment}
+                        onChange={setInstallment}
+                        options={[
+                          { value: "0", label: "일시불" },
+                          ...(total >= 50000
+                            ? [2, 3, 6, 12].map((months) => ({
+                                value: String(months),
+                                label: months + "개월",
+                              }))
+                            : []),
+                        ]}
+                      />
                       <p className="hint">
-                        카드 정보는 카드사의 보안 결제창에서 입력합니다.<br />
+                        카드 정보는 카드사의 보안 결제창에서 입력합니다.
+                        <br />
                         할부·수수료 조건은 결제창에서 확인해 주세요.
                       </p>
                     </div>
@@ -819,8 +1125,20 @@ export default function App() {
                           aria-pressed={wallet === method}
                           onClick={() => setWallet(method)}
                         >
-                          <img className={method === '카카오페이' ? 'wallet-logo kakao-wordmark' : 'wallet-logo'} src={method === '카카오페이' ? '/payments/kakaopay.svg' : '/payments/toss.png'} alt={method === '카카오페이' ? '카카오페이' : ''} />
-                          {method !== '카카오페이' && <strong>{method}</strong>}
+                          <img
+                            className={
+                              method === "카카오페이"
+                                ? "wallet-logo kakao-wordmark"
+                                : "wallet-logo"
+                            }
+                            src={
+                              method === "카카오페이"
+                                ? "/payments/kakaopay.svg"
+                                : "/payments/toss.png"
+                            }
+                            alt={method === "카카오페이" ? "카카오페이" : ""}
+                          />
+                          {method !== "카카오페이" && <strong>{method}</strong>}
                           {wallet === method && <Icon name="check" size={17} />}
                         </button>
                       ))}
@@ -872,8 +1190,22 @@ export default function App() {
                     기록은 법정 기간 동안 보관합니다.
                   </p>
                 </details>
-                {pickup.phone && <div className="inline-support"><Icon name="phone" size={18} /><div><strong>수령 · 교환 · 환불 문의</strong><a href={'tel:' + pickup.phone}>{pickup.cafe} · {pickup.phone}</a></div></div>}
-                {issue && <p className="payment-error" role="alert">{issue}</p>}
+                {pickup.phone && (
+                  <div className="inline-support">
+                    <Icon name="phone" size={18} />
+                    <div>
+                      <strong>수령 · 교환 · 환불 문의</strong>
+                      <a href={"tel:" + pickup.phone}>
+                        {pickup.cafe} · {pickup.phone}
+                      </a>
+                    </div>
+                  </div>
+                )}
+                {issue && (
+                  <p className="payment-error" role="alert">
+                    {issue}
+                  </p>
+                )}
                 {paymentError && (
                   <p className="payment-error" role="alert">
                     {paymentError}
@@ -881,7 +1213,8 @@ export default function App() {
                 )}
                 <button
                   className="primary"
-                  disabled={!!issue ||
+                  disabled={
+                    !!issue ||
                     busy ||
                     !agreed ||
                     !verifiedPhone ||
@@ -911,12 +1244,8 @@ export default function App() {
             <span className="loading-spinner" />
             결제 내역을 확인하고 있어요.
           </div>
-          <h1>
-            잠시만 기다려 주세요.
-          </h1>
-          <p>
-            확인이 끝나면 주문 내역을 보여드릴게요.
-          </p>
+          <h1>잠시만 기다려 주세요.</h1>
+          <p>확인이 끝나면 주문 내역을 보여드릴게요.</p>
           {paymentError && (
             <p className="payment-error" role="alert">
               {paymentError}
@@ -948,10 +1277,15 @@ export default function App() {
             이제 당신의 일상으로.
           </h1>
           <p>
-            {confirmedOrder.simulated
-              ? "프로토타입 주문이 저장되었습니다. 실제 결제는 발생하지 않았습니다."
-              : <>{product.project.artist} 작가의{' '}{isExhibition ? '작품 구매 예약이' : '작품 주문이'} 완료되었습니다.</>}
-
+            {confirmedOrder.simulated ? (
+              "프로토타입 주문이 저장되었습니다. 실제 결제는 발생하지 않았습니다."
+            ) : (
+              <>
+                {product.project.artist} 작가의{" "}
+                {isExhibition ? "작품 구매 예약이" : "작품 주문이"}{" "}
+                완료되었습니다.
+              </>
+            )}
           </p>
           <div className="receipt">
             <small>주문 번호</small>
@@ -1005,7 +1339,17 @@ export default function App() {
           </div>
           {snapshot?.store.address && <p>{snapshot.store.address}</p>}
           {snapshot?.store.hours && <p>운영 시간 · {snapshot.store.hours}</p>}
-          {pickup.phone && <div className="inline-support"><Icon name="phone" size={18} /><div><strong>수령 · 교환 · 환불 문의</strong><a href={'tel:' + pickup.phone}>{pickup.cafe} · {pickup.phone}</a></div></div>}
+          {pickup.phone && (
+            <div className="inline-support">
+              <Icon name="phone" size={18} />
+              <div>
+                <strong>수령 · 교환 · 환불 문의</strong>
+                <a href={"tel:" + pickup.phone}>
+                  {pickup.cafe} · {pickup.phone}
+                </a>
+              </div>
+            </div>
+          )}
           <div className="receipt-tools">
             <button
               className="text-link"
@@ -1043,7 +1387,68 @@ export default function App() {
           </button>
         </main>
       )}
-      {checkoutReview && <div className="modal-backdrop" onClick={() => { if (!busy) setCheckoutReview(null); }}><section className="modal payment-review" role="dialog" aria-modal="true" aria-labelledby="payment-review-title" onClick={event => event.stopPropagation()}><button className="modal-close icon-button" aria-label="닫기" disabled={busy} onClick={() => setCheckoutReview(null)}><Icon name="close" /></button><h2 id="payment-review-title">주문 내용을 확인해 주세요</h2><div className="order-product"><img src={product.img} alt={product.name} /><div><small>{product.project.artist} 작가</small><strong>{product.name}</strong><p>{quantity}개 · {money(total)}</p></div></div><dl><div><dt>결제 수단</dt><dd>{payment === '카드 결제' ? card + '카드' : wallet}</dd></div><div><dt>수령 방법</dt><dd>{pickupText}</dd></div><div className="total"><dt>주문 금액</dt><dd>{money(total)}</dd></div></dl>{paymentError && <p className="payment-error" role="alert">{paymentError}</p>}<button className="primary" disabled={busy} onClick={() => beginCheckout(checkoutReview.name)}>{busy ? '주문을 처리하고 있어요…' : '확인하고 주문하기'}</button></section></div>}
+      {checkoutReview && (
+        <div
+          className="modal-backdrop"
+          onClick={() => {
+            if (!busy) setCheckoutReview(null)
+          }}
+        >
+          <section
+            className="modal payment-review"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="payment-review-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              className="modal-close icon-button"
+              aria-label="닫기"
+              disabled={busy}
+              onClick={() => setCheckoutReview(null)}
+            >
+              <Icon name="close" />
+            </button>
+            <h2 id="payment-review-title">주문 내용을 확인해 주세요</h2>
+            <div className="order-product">
+              <img src={product.img} alt={product.name} />
+              <div>
+                <small>{product.project.artist} 작가</small>
+                <strong>{product.name}</strong>
+                <p>
+                  {quantity}개 · {money(total)}
+                </p>
+              </div>
+            </div>
+            <dl>
+              <div>
+                <dt>결제 수단</dt>
+                <dd>{payment === "카드 결제" ? card + "카드" : wallet}</dd>
+              </div>
+              <div>
+                <dt>수령 방법</dt>
+                <dd>{pickupText}</dd>
+              </div>
+              <div className="total">
+                <dt>주문 금액</dt>
+                <dd>{money(total)}</dd>
+              </div>
+            </dl>
+            {paymentError && (
+              <p className="payment-error" role="alert">
+                {paymentError}
+              </p>
+            )}
+            <button
+              className="primary"
+              disabled={busy}
+              onClick={() => beginCheckout(checkoutReview.name)}
+            >
+              {busy ? "주문을 처리하고 있어요…" : "확인하고 주문하기"}
+            </button>
+          </section>
+        </div>
+      )}
       {gallery && (
         <div className="modal-backdrop" onClick={() => setGallery(false)}>
           <section
