@@ -7,6 +7,7 @@ const environment = (import.meta as ImportMeta & {
 }).env
 
 const apiBaseUrl = (environment.VITE_API_BASE_URL || "").replace(/\/$/, "")
+const gatewayToken = environment.VITE_SUPABASE_ANON_KEY || ""
 const ACCESS_TOKEN_KEY = "curit.qr.access-token.v1"
 
 function accessToken() {
@@ -196,6 +197,7 @@ export async function commerceRequest(
   body?: Record<string, unknown>,
 ) {
   if (isPresentation) return presentationRequest(path, body)
+  const sessionToken = accessToken()
   let response: Response
   try {
     response = await fetch(apiBaseUrl + path, {
@@ -203,7 +205,15 @@ export async function commerceRequest(
       credentials: "include",
       headers: {
         ...(body ? { "Content-Type": "application/json" } : {}),
-        ...(accessToken() ? { Authorization: `Bearer ${accessToken()}` } : {}),
+        ...(gatewayToken
+          ? {
+              apikey: gatewayToken,
+              Authorization: `Bearer ${gatewayToken}`,
+            }
+          : sessionToken
+            ? { Authorization: `Bearer ${sessionToken}` }
+            : {}),
+        ...(sessionToken ? { "x-curit-session": sessionToken } : {}),
       },
       body: body ? JSON.stringify(body) : undefined,
       signal: AbortSignal.timeout(20000),
