@@ -1,0 +1,65 @@
+.field-sale { min-height: 100dvh; background: #fcfcf9; color: #242820; font-size: 16px; }
+.field-sale * { box-sizing: border-box; }
+.field-sale ::selection { background: #e0e9d7; }
+.field-sale button, .field-sale summary { touch-action: manipulation; }
+.field-sale button:focus-visible, .field-sale a:focus-visible, .field-sale summary:focus-visible { outline: 2px solid #4a6338; outline-offset: 4px; }
+.field-skip { position: absolute; top: -80px; left: 16px; padding: 12px; background: #fff; z-index: 3; }
+.field-skip:focus { top: 8px; }
+.field-header { max-width: 1040px; margin-inline: auto; padding: 28px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.field-header .brand-logo { text-decoration: none; font-size: 20px; min-height: 44px; display: flex; align-items: center; }
+.field-header > span { color: #62695b; font-size: 14px; }
+.field-main { max-width: 1040px; margin-inline: auto; padding: 12px 32px 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+.field-photo { margin: 0; min-width: 0; }
+.field-photo img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; background: #fff; border-radius: 16px; }
+.field-photo figcaption { color: #62695b; font-size: 14px; line-height: 1.7; margin-top: 14px; }
+.field-details { min-width: 0; padding-top: 8px; }
+.field-details h1 { font-size: 32px; font-weight: 750; line-height: 1.3; letter-spacing: -.03em; margin: 0 0 16px; word-break: keep-all; }
+.field-description { color: #62695b; margin: 0; line-height: 1.8; word-break: keep-all; }
+.field-price { font-size: 28px; font-weight: 750; letter-spacing: -.02em; margin: 28px 0; }
+.field-price > span { font-size: 14px; color: #62695b; font-weight: 400; letter-spacing: 0; }
+.field-pickup { display: grid; gap: 8px; padding-block: 20px; border-block: 1px solid #dfe3d8; }
+.field-pickup strong { font-size: 16px; font-weight: 650; }
+.field-pickup span { font-size: 14px; color: #62695b; line-height: 1.7; }
+.field-quantity { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; }
+.field-quantity > div { display: flex; align-items: center; border: 1px solid #d6dccd; border-radius: 12px; }
+.field-quantity button { width: 44px; height: 44px; background: transparent; border: 0; font-size: 22px; color: #303c25; }
+.field-quantity output { min-width: 36px; text-align: center; font-variant-numeric: tabular-nums; }
+.field-before { font-size: 14px; color: #62695b; line-height: 1.8; margin: 20px 0; }
+.field-primary { width: 100%; min-height: 54px; display: flex; align-items: center; justify-content: center; gap: 18px; padding: 16px 20px; border: 0; border-radius: 12px; color: #fff; background: #4a6338; font-size: 16px; font-weight: 650; line-height: 1.5; }
+.field-primary:hover { background: #3b512c; }
+.field-secondary { min-height: 48px; padding: 12px 18px; border: 1px solid #a9b99c; border-radius: 12px; background: #fff; color: #354b27; font-size: 16px; }
+.field-secondary:hover { background: #edf2e6; }
+.field-transfer { padding-top: 24px; border-top: 1px solid #dfe3d8; margin-top: 24px; }
+.field-transfer h2, .field-state h2 { font-size: 20px; font-weight: 700; line-height: 1.5; letter-spacing: -.02em; margin: 0 0 8px; }
+.field-transfer > p { margin: 0 0 24px; color: #62695b; font-size: 14px; }
+.field-transfer dl { margin-bottom: 24px; }
+.field-transfer dl > div { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 12px; padding-block: 12px; font-size: 16px; line-height: 1.6; }
+.field-transfer dt { color: #62695b; }
+.field-transfer dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+.field-transfer .field-amount { color: #354b27; font-size: 22px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.field-account { user-select: all; font-variant-numeric: tabular-nums; }
+.field-transfer .field-copy-status { margin: 12px 0 0; color: #354b27; }
+.field-copy-status:empty { display: none; }
+.field-receive { padding: 20px; border-radius: 12px; background: #eaf0e2; margin-top: 24px; }
+.field-receive h3 { font-size: 16px; font-weight: 650; margin: 0 0 8px; }
+.field-receive p { font-size: 14px; color: #48573b; line-height: 1.8; margin: 0; }
+.field-help { margin-top: 28px; padding-block: 18px; border-block: 1px solid #dfe3d8; }
+.field-help summary { min-height: 24px; font-size: 14px; color: #48573b; }
+.field-help p { font-size: 14px; color: #62695b; margin: 16px 0 0; line-height: 1.8; }
+.field-state { padding-block: 28px; grid-column: 1 / -1; }
+.field-state h1 { font-size: 28px; }
+.field-state p, .field-status { color: #62695b; line-height: 1.8; }
+.field-status { padding-block: 16px; }
+.field-footer { max-width: 976px; margin-inline: auto; border-top: 1px solid #dfe3d8; padding: 24px 0 36px; color: #62695b; font-size: 14px; line-height: 1.7; }
+@media (max-width: 720px) {
+  .field-header { padding: max(12px, env(safe-area-inset-top, 0px)) 24px 12px; }
+  .field-main { display: flex; flex-direction: column; gap: 28px; padding: 0 24px 36px; }
+  .field-photo, .field-details { width: 100%; }
+  .field-photo img { aspect-ratio: 1.12; }
+  .field-photo figcaption { font-size: 14px; }
+  .field-details { padding-top: 0; }
+  .field-details h1 { font-size: 28px; }
+  .field-price { margin-block: 24px; }
+  .field-transfer dl > div { grid-template-columns: 76px minmax(0, 1fr); }
+  .field-footer { margin-inline: 24px; padding-bottom: max(28px, env(safe-area-inset-bottom, 0px)); }
+}

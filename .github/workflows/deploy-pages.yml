@@ -33,6 +33,11 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
           VITE_PRESENTATION_MODE: "false"
           VITE_BASE_PATH: /curit-qr-web
+      - name: Apply field-sale settings
+        if: ${{ vars.FIELD_SALE_CONFIG != '' }}
+        env:
+          FIELD_SALE_CONFIG: ${{ vars.FIELD_SALE_CONFIG }}
+        run: node -e "const fs = require('node:fs'); const data = process.env.FIELD_SALE_CONFIG; JSON.parse(data); fs.writeFileSync('dist/field-sale/config.json', data)"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

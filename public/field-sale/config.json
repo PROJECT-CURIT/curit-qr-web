@@ -1,0 +1,8 @@
+{
+  "storeName": "전시 매장",
+  "bank": null,
+  "products": {
+    "kendama": { "price": null, "quantity": null },
+    "dango-keyring": { "price": null, "quantity": null }
+  }
+}
