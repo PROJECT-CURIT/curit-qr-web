@@ -15,3 +15,4 @@
 .field-video h3 { margin: 0 0 14px; font-size: 18px; font-weight: 650; line-height: 1.5; }
 .field-video iframe { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 0; border-radius: 12px; background: #111; }
 .field-video .text-link { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; }
+.field-sale .story > .field-story-paragraph { margin-top: 18px; }

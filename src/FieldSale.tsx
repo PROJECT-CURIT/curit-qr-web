@@ -373,6 +373,11 @@ export default function FieldSale() {
                 <section className="story">
                   <h2 className="story-label">{product.subtitle}</h2>
                   <p className="story-lead">{product.description}</p>
+                  {product.story.map((paragraph) => (
+                    <p className="field-story-paragraph" key={paragraph}>
+                      {paragraph}
+                    </p>
+                  ))}
                   {id === "kendama" && (
                     <div className="field-video">
                       <h3>켄다마 고수의 플레이</h3>
@@ -399,12 +404,6 @@ export default function FieldSale() {
                       </p>
                     </div>
                   )}
-                  <div className="story-divider" />
-                  <p>
-                    이 공간에서 발견한 작은 취향을 일상으로 가져가 보세요. 상품
-                    옆 QR에서 구매 방법을 확인하고, 입금 확인 후 현장에서 받아
-                    갈 수 있어요.
-                  </p>
                 </section>
               ) : tab === "상품 정보" ? (
                 <section className="info-section">
