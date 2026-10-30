@@ -32,6 +32,9 @@ describe("field-sale transfer guidance", () => {
           /<button(?=[^>]*class="primary")(?=[^>]*disabled="")[^>]*>/,
         )
         expect(html).not.toContain("김서연")
+        expect(html).not.toContain('class="artist-line"')
+        expect(html).toContain('href="tel:01029277547"')
+        expect(html).toContain("010-2927-7547")
         expect(html).not.toContain("계좌번호 복사")
         expect(html).not.toContain("주문 완료")
       }

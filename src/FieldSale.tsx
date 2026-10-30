@@ -12,6 +12,15 @@ import "./fieldSale.css"
 const money = (amount: number) => amount.toLocaleString("ko-KR") + "원"
 const asset = (file: string) => import.meta.env.BASE_URL + "field-sale/" + file
 const tabs = ["상품 소개", "상품 정보", "수령 · 교환"] as const
+const support = (
+  <div className="inline-support">
+    <Icon name="phone" />
+    <div>
+      <strong>입금 확인 · 취소 · 교환 문의</strong>
+      <a href="tel:01029277547">010-2927-7547</a>
+    </div>
+  </div>
+)
 
 export default function FieldSale() {
   const id = fieldProductId(new URLSearchParams(location.search).get("buy"))
@@ -214,6 +223,7 @@ export default function FieldSale() {
                   판매자에게 실제 입금 확인을 요청한 뒤 상품을 받아 주세요. 이
                   화면은 결제 완료 증빙이 아니에요.
                 </p>
+                {support}
               </section>
             </div>
             <aside className="order-summary">
@@ -270,15 +280,6 @@ export default function FieldSale() {
                 >
                   <Icon name="share" size={19} />
                 </button>
-              </div>
-              <div className="artist-line">
-                <span className="avatar">
-                  <Icon name="box" size={22} />
-                </span>
-                <span>
-                  <strong>{config?.storeName || "매장 현장 전시"}</strong>
-                  <small>전시된 실물을 확인하고 현장에서 받아 가세요.</small>
-                </span>
               </div>
               <div className="price-row">
                 <strong>
@@ -351,6 +352,7 @@ export default function FieldSale() {
                   {shareMessage}
                 </p>
               )}
+              {support}
             </div>
           </div>
           <div className="content-grid">
@@ -421,10 +423,10 @@ export default function FieldSale() {
                   <details>
                     <summary>입금 · 취소 · 교환</summary>
                     <p>
-                      입금 확인, 취소와 교환은 현장 판매자에게 문의해 주세요. 이
-                      웹페이지는 주문이나 결제 완료를 자동으로 확인하지
-                      않습니다.
+                      입금 확인, 취소와 교환은 아래 연락처로 문의해 주세요.
+                      웹페이지에서 입금 여부를 자동으로 확인하지 않습니다.
                     </p>
+                    {support}
                   </details>
                 </section>
               )}
