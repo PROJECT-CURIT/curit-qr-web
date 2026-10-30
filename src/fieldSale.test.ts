@@ -35,7 +35,7 @@ describe("field-sale transfer guidance", () => {
         expect(html).not.toContain('class="artist-line"')
         expect(html).toContain('href="tel:01029277547"')
         expect(html).toContain("010-2927-7547")
-        expect(html.includes("youtube-nocookie.com/embed/WSEgTBeAry0")).toBe(
+        expect(html.includes("youtube-nocookie.com/embed/3QgZeNosWlE")).toBe(
           id === "kendama",
         )
         expect(html).not.toContain("계좌번호 복사")

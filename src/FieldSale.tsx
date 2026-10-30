@@ -382,8 +382,8 @@ export default function FieldSale() {
                     <div className="field-video">
                       <h3>켄다마 고수의 플레이</h3>
                       <iframe
-                        src="https://www.youtube-nocookie.com/embed/WSEgTBeAry0?rel=0&playsinline=1"
-                        title="Christian Fraser의 켄다마 트릭 영상 · Sweets Kendamas"
+                        src="https://www.youtube-nocookie.com/embed/3QgZeNosWlE?rel=0&playsinline=1"
+                        title="켄다마 고수 쇼츠 · Sweets Kendamas France"
                         loading="lazy"
                         referrerPolicy="strict-origin-when-cross-origin"
                         allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -391,11 +391,11 @@ export default function FieldSale() {
                       />
                       <a
                         className="text-link"
-                        href="https://www.youtube.com/watch?v=WSEgTBeAry0"
+                        href="https://www.youtube.com/shorts/3QgZeNosWlE"
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        YouTube에서 보기 · Sweets Kendamas
+                        YouTube에서 보기 · Sweets Kendamas France
                         <Icon name="arrow" size={14} />
                       </a>
                       <p className="hint">
