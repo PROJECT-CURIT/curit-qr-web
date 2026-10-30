@@ -16,3 +16,7 @@
 .field-video iframe { display: block; width: 100%; max-width: 320px; height: auto; aspect-ratio: 9 / 16; margin-inline: auto; border: 0; border-radius: 12px; background: #111; }
 .field-video .text-link { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; }
 .field-sale .story > .field-story-paragraph { margin-top: 18px; }
+@media (max-width: 680px) {
+  .field-sale .checkout .order-summary { align-self: stretch; margin-top: 24px; }
+  .field-sale .checkout .inline-support { margin-bottom: 0; }
+}
