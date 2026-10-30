@@ -109,9 +109,40 @@ export async function requestTossPayment(
 ) {
   const checkout = readTossCheckout(value)
   const tossPayments = await loadTossPayments(checkout.clientKey)
+  const customerKey =
+    checkout.customerKey === "ANONYMOUS" ? ANONYMOUS : checkout.customerKey
+
+  // Toss Payments' public documentation key is a Payment Widget key
+  // (`test_gck_*`). Widget keys must use the widgets API while merchant
+  // payment-window keys (`test_ck_*`) use payment(). Keep both paths so the
+  // demo can run with the official widget sandbox today and switch to the
+  // merchant's own API key without another UI change later.
+  if (checkout.clientKey.startsWith("test_gck_")) {
+    const widgets = tossPayments.widgets({ customerKey })
+    const amount = { currency: "KRW" as const, value: checkout.amount }
+    await widgets.setAmount(amount)
+    await widgets.requestPaymentWindow(
+      {
+        amount,
+        orderId: checkout.orderId,
+        orderName: checkout.orderName,
+        customerName: checkout.customerName,
+        customerMobilePhone: phone,
+        successUrl: checkout.successUrl,
+        failUrl: checkout.failUrl,
+      },
+      {
+        variantKey: {
+          paymentMethod: "DEFAULT",
+          agreement: "AGREEMENT",
+        },
+      },
+    )
+    return
+  }
+
   const payment = tossPayments.payment({
-    customerKey:
-      checkout.customerKey === "ANONYMOUS" ? ANONYMOUS : checkout.customerKey,
+    customerKey,
   })
   const easyPay =
     method === "kakaopay"
