@@ -14,9 +14,9 @@ pnpm dev
 
 대표 QR URL:
 
-- `http://localhost:5173/q/demo-mug-white-gray`
-- `http://localhost:5173/q/demo-bowl-set-2026`
-- `http://localhost:5173/q/demo-dessert-plate`
+- `http://localhost:5173/?qr=demo-mug-white-gray`
+- `http://localhost:5173/?qr=demo-bowl-set-2026`
+- `http://localhost:5173/?qr=demo-dessert-plate`
 
 ## 검증
 
@@ -35,11 +35,11 @@ pnpm build
 
 현재 결과물은 모바일 브라우저, 설치형 PWA, 앱 내부 WebView에서 같은 화면을 사용하는 반응형 웹입니다. iOS·Android 네이티브 앱 화면 자체가 필요한 경우에는 `curit-mobile`에서 별도로 WebView 셸 또는 네이티브 UI를 구현해야 합니다.
 
-GitHub Pages 배포는 `/curit-qr-web/q/{token}` 하위 경로에서도 새로고침이 유지되도록 `404.html` SPA fallback과 `VITE_BASE_PATH`를 사용합니다. API 주소와 브라우저 공개용 Supabase anon 키는 저장소 변수 `VITE_API_BASE_URL`, `VITE_SUPABASE_ANON_KEY`로 주입합니다. `service_role` 또는 secret 키는 절대 프런트엔드에 넣지 않습니다.
+GitHub Pages 배포는 직접 접속도 HTTP 200을 유지하도록 `/curit-qr-web/?qr={token}` 형식을 사용합니다. 이전 `/curit-qr-web/q/{token}` 주소도 읽을 수 있지만 신규 QR에는 사용하지 않습니다. API 주소와 브라우저 공개용 Supabase anon 키는 저장소 변수 `VITE_API_BASE_URL`, `VITE_SUPABASE_ANON_KEY`로 주입합니다. `service_role` 또는 secret 키는 절대 프런트엔드에 넣지 않습니다.
 
 ## QR 규칙
 
-QR에는 가격, 재고, 매장 정보가 들어가지 않습니다. `https://서비스주소/q/{무작위토큰}`만 저장하며 웹은 토큰을 API에 전달해 최신 정보를 조회합니다.
+QR에는 가격, 재고, 매장 정보가 들어가지 않습니다. `https://서비스주소/?qr={무작위토큰}`만 저장하며 웹은 토큰을 API에 전달해 최신 정보를 조회합니다.
 
 - 굿즈: `매장 전시 상품(listing)` 하나당 QR 하나, 수량은 서버 재고로 관리
 - 원화·단일 작품: 개별 실물 하나당 QR 하나, 재고는 1
