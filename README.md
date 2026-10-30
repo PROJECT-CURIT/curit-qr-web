@@ -35,7 +35,7 @@ pnpm build
 
 현재 결과물은 모바일 브라우저, 설치형 PWA, 앱 내부 WebView에서 같은 화면을 사용하는 반응형 웹입니다. iOS·Android 네이티브 앱 화면 자체가 필요한 경우에는 `curit-mobile`에서 별도로 WebView 셸 또는 네이티브 UI를 구현해야 합니다.
 
-GitHub Pages 배포는 `/curit-qr-web/q/{token}` 하위 경로에서도 새로고침이 유지되도록 `404.html` SPA fallback과 `VITE_BASE_PATH`를 사용합니다. API 주소는 저장소 변수 `VITE_API_BASE_URL`로 주입합니다.
+GitHub Pages 배포는 `/curit-qr-web/q/{token}` 하위 경로에서도 새로고침이 유지되도록 `404.html` SPA fallback과 `VITE_BASE_PATH`를 사용합니다. API 주소와 브라우저 공개용 Supabase anon 키는 저장소 변수 `VITE_API_BASE_URL`, `VITE_SUPABASE_ANON_KEY`로 주입합니다. `service_role` 또는 secret 키는 절대 프런트엔드에 넣지 않습니다.
 
 ## QR 규칙
 
