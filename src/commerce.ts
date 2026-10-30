@@ -7,6 +7,8 @@ const environment = (import.meta as ImportMeta & {
 }).env
 
 const apiBaseUrl = (environment.VITE_API_BASE_URL || "").replace(/\/$/, "")
+const apiFunctionRegion =
+  environment.VITE_SUPABASE_FUNCTION_REGION || "ap-northeast-2"
 const gatewayToken = environment.VITE_SUPABASE_ANON_KEY || ""
 const ACCESS_TOKEN_KEY = "curit.qr.access-token.v1"
 
@@ -24,6 +26,14 @@ export function clearCommerceSession() {
 }
 
 export const isPresentation = environment.VITE_PRESENTATION_MODE === "true"
+
+function commerceUrl(path: string) {
+  const target = apiBaseUrl + path
+  if (!apiBaseUrl.includes(".supabase.co") || !apiFunctionRegion) return target
+  const url = new URL(target)
+  url.searchParams.set("forceFunctionRegion", apiFunctionRegion)
+  return url.toString()
+}
 
 export type PaidOrder = {
   v?: 1
@@ -231,7 +241,7 @@ export async function commerceRequest(
   const sessionToken = accessToken()
   let response: Response
   try {
-    response = await fetch(apiBaseUrl + path, {
+    response = await fetch(commerceUrl(path), {
       method: body ? "POST" : "GET",
       credentials: "include",
       headers: {
