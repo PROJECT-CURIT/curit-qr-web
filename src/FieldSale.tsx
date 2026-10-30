@@ -373,6 +373,32 @@ export default function FieldSale() {
                 <section className="story">
                   <h2 className="story-label">{product.subtitle}</h2>
                   <p className="story-lead">{product.description}</p>
+                  {id === "kendama" && (
+                    <div className="field-video">
+                      <h3>켄다마 고수의 플레이</h3>
+                      <iframe
+                        src="https://www.youtube-nocookie.com/embed/WSEgTBeAry0?rel=0&playsinline=1"
+                        title="Christian Fraser의 켄다마 트릭 영상 · Sweets Kendamas"
+                        loading="lazy"
+                        referrerPolicy="strict-origin-when-cross-origin"
+                        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                      <a
+                        className="text-link"
+                        href="https://www.youtube.com/watch?v=WSEgTBeAry0"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        YouTube에서 보기 · Sweets Kendamas
+                        <Icon name="arrow" size={14} />
+                      </a>
+                      <p className="hint">
+                        플레이 참고 영상으로, 영상 속 제품은 판매 상품과 다를 수
+                        있어요.
+                      </p>
+                    </div>
+                  )}
                   <div className="story-divider" />
                   <p>
                     이 공간에서 발견한 작은 취향을 일상으로 가져가 보세요. 상품

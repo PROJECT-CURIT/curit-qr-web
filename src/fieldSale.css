@@ -11,3 +11,7 @@
 .field-sale .field-state p { margin-top: 0; }
 .field-sale .field-transfer-heading { outline: none; }
 .field-sale .field-transfer-account dd { overflow-wrap: anywhere; }
+.field-video { margin-top: 28px; }
+.field-video h3 { margin: 0 0 14px; font-size: 18px; font-weight: 650; line-height: 1.5; }
+.field-video iframe { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 0; border-radius: 12px; background: #111; }
+.field-video .text-link { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; }
