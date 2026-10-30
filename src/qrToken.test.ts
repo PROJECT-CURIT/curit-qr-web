@@ -4,6 +4,9 @@ import { qrPath, readQrToken } from "./qrToken"
 describe("product QR paths", () => {
   it("reads one opaque token from a product QR path", () => {
     expect(readQrToken("/q/demo-mug-white-gray")).toBe("demo-mug-white-gray")
+    expect(readQrToken("/curit-qr-web/q/demo-mug-white-gray")).toBe(
+      "demo-mug-white-gray",
+    )
   })
 
   it("does not accept traversal or short identifiers", () => {

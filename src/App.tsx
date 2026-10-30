@@ -7,6 +7,7 @@ import {
   loadQrListing,
   pickupForArtwork,
   readPaidOrder,
+  requestTossPayment,
   CommerceError,
   isPresentation,
   type PaidOrder,
@@ -164,7 +165,7 @@ export default function App() {
     setStage("detail")
     setAccessIntent("checkout")
     setSessionError(
-      "인증 유지 기간이 끝났어요. 휴대폰 번호를 다시 확인해 주세요.",
+      "연락처 유지 기간이 끝났어요. 휴대폰 번호를 다시 확인해 주세요.",
     )
   }, [])
   const acceptSession = (authenticatedPhone: string) => {
@@ -199,7 +200,7 @@ export default function App() {
           setSessionError(
             error instanceof Error
               ? error.message
-              : "인증 정보를 확인하지 못했어요.",
+              : "연락처 정보를 확인하지 못했어요.",
           )
         setSessionStatus("guest")
       })
@@ -222,7 +223,9 @@ export default function App() {
     window.addEventListener("popstate", handlePop)
     if ("serviceWorker" in navigator) {
       if (import.meta.env.PROD)
-        navigator.serviceWorker.register("/sw.js").catch(() => {})
+        navigator.serviceWorker
+          .register(`${import.meta.env.BASE_URL}sw.js`)
+          .catch(() => {})
       else
         navigator.serviceWorker
           .getRegistrations()
@@ -257,7 +260,17 @@ export default function App() {
     }
   }, [gallery])
   useEffect(() => {
-    const order = new URLSearchParams(window.location.search).get("order")
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("payment") === "fail") {
+      setStage("checkout")
+      setPaymentError(
+        params.get("message") || "결제가 취소되었거나 인증에 실패했습니다.",
+      )
+      return
+    }
+    const order = params.get("order") || params.get("orderId")
+    const paymentKey = params.get("paymentKey")
+    const amount = Number(params.get("amount"))
     if (
       listingStatus === "error" ||
       sessionStatus !== "verified" ||
@@ -269,7 +282,15 @@ export default function App() {
     setStage("confirming")
     setPaymentError("")
     setBusy(true)
-    commerceRequest("/api/orders/" + encodeURIComponent(order))
+    const confirmation =
+      paymentKey && Number.isSafeInteger(amount) && amount > 0
+        ? commerceRequest("/api/payments/confirm", {
+            paymentKey,
+            orderId: order,
+            amount,
+          })
+        : commerceRequest("/api/orders/" + encodeURIComponent(order))
+    confirmation
       .then((result) => {
         const confirmed = readPaidOrder(result)
         if (
@@ -334,9 +355,10 @@ export default function App() {
     navigate("detail")
   }
   const share = async () => {
+    const base = new URL(import.meta.env.BASE_URL, window.location.origin)
     const url = qrToken
       ? window.location.origin + qrPath(qrToken)
-      : `${window.location.origin}/?artwork=${encodeURIComponent(productId)}`
+      : new URL(`?artwork=${encodeURIComponent(productId)}`, base).href
     try {
       if (navigator.share) await navigator.share({ title: product?.name, url })
       else {
@@ -442,7 +464,7 @@ export default function App() {
     }
     setPaymentError("")
     if (!verifiedPhone || verifiedPhone !== phone) {
-      setPaymentError("주문 안내를 위해 휴대폰 인증을 완료해 주세요.")
+      setPaymentError("주문 안내를 위해 휴대폰 번호 확인을 완료해 주세요.")
       expireSession()
       return
     }
@@ -471,6 +493,12 @@ export default function App() {
     checkoutStarted.current = true
     setBusy(true)
     try {
+      const paymentMethod =
+        payment === "카드 결제"
+          ? "card" as const
+          : wallet === "카카오페이"
+            ? "kakaopay" as const
+            : "tosspay" as const
       const result = await commerceRequest("/api/checkout", {
         artworkId: product.id,
         qrToken: snapshot?.qrToken || qrToken || undefined,
@@ -478,20 +506,22 @@ export default function App() {
         name,
         phone,
         fulfillment: "pickup",
-        paymentMethod:
-          payment === "카드 결제"
-            ? "card"
-            : wallet === "카카오페이"
-              ? "kakaopay"
-              : "tosspay",
+        paymentMethod,
         cardIssuer: payment === "카드 결제" ? card : undefined,
         installment:
           payment === "카드 결제" && total >= 50000 ? installment : "0",
         returnUrl: qrToken
           ? window.location.origin + qrPath(qrToken)
-          : window.location.origin + "/?artwork=" + product.id,
+          : new URL(
+              `?artwork=${encodeURIComponent(product.id)}`,
+              new URL(import.meta.env.BASE_URL, window.location.origin),
+            ).href,
       })
-      window.location.assign(checkoutDestination(result.checkoutUrl))
+      if (result?.payment) {
+        await requestTossPayment(result.payment, paymentMethod, phone)
+      } else {
+        window.location.assign(checkoutDestination(result.checkoutUrl))
+      }
     } catch (error) {
       if (error instanceof CommerceError && error.status === 401)
         expireSession()
@@ -1042,13 +1072,13 @@ export default function App() {
                   <div className="verified-contact">
                     <Icon name="check" size={17} />
                     <div>
-                      <strong>인증된 휴대폰 번호</strong>
+                      <strong>확인한 휴대폰 번호</strong>
                       <span>
                         {verifiedPhone.slice(0, 3)}-{verifiedPhone.slice(3, -4)}
                         -{verifiedPhone.slice(-4)}
                       </span>
                     </div>
-                    <small>인증 완료</small>
+                    <small>확인 완료</small>
                   </div>
                 </section>
                 <section className="form-section payment-section">
@@ -1184,7 +1214,7 @@ export default function App() {
                   <p>
                     수집 항목: 이름, 휴대폰 번호
                     <br />
-                    이용 목적: 주문 처리, 본인 확인, 수령 안내
+                    이용 목적: 주문 처리, 주문 조회, 수령 안내
                     <br />
                     보유 기간: 주문 처리 완료 후 파기. 관련 법령에 따른 거래
                     기록은 법정 기간 동안 보관합니다.
@@ -1230,7 +1260,7 @@ export default function App() {
                 </button>
                 {!verifiedPhone && (
                   <p className="hint summary-hint">
-                    휴대폰 인증을 완료하면 결제할 수 있어요.
+                    휴대폰 번호 확인을 완료하면 결제할 수 있어요.
                   </p>
                 )}
               </aside>

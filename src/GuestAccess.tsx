@@ -13,7 +13,6 @@ export default function GuestAccess({
   onVerified,
 }: Props) {
   const [phone, setPhone] = useState("")
-  const [carrier, setCarrier] = useState("SKT")
   const [consent, setConsent] = useState(false)
   const [remember, setRemember] = useState(true)
   const [open, setOpen] = useState(false)
@@ -40,7 +39,6 @@ export default function GuestAccess({
     try {
       const result = await commerceRequest("/api/auth/identity/start", {
         phone,
-        carrier,
         remember,
         consent: true,
         returnUrl: window.location.href,
@@ -52,7 +50,7 @@ export default function GuestAccess({
         onVerified(phone)
       } else {
         if (typeof result.authUrl !== "string")
-          throw new Error("본인확인 창을 열지 못했어요. 다시 시도해 주세요.")
+          throw new Error("연락처 확인 창을 열지 못했어요. 다시 시도해 주세요.")
         const destination = new URL(result.authUrl, window.location.origin)
         const hosts = [
           "niceid.co.kr",
@@ -69,7 +67,7 @@ export default function GuestAccess({
                 destination.hostname.endsWith("." + host),
             ))
         )
-          throw new Error("본인확인 주소를 확인하지 못했어요.")
+          throw new Error("연락처 확인 주소를 확인하지 못했어요.")
         window.location.assign(destination.href)
       }
     } catch (error) {
@@ -145,8 +143,8 @@ export default function GuestAccess({
             <details className="access-policy">
               <summary>이용 안내</summary>
               <p>
-                휴대폰 번호는 인증과 주문 내역 확인에 사용됩니다. 인증 정보는
-                유지 기간까지, 거래 기록은 관련 법령에 따라 보관됩니다.
+                휴대폰 번호는 주문 안내와 주문 내역 확인에 사용됩니다. 연락처
+                정보는 유지 기간까지, 거래 기록은 관련 법령에 따라 보관됩니다.
               </p>
             </details>
             <label className="access-check remember-check">
@@ -155,7 +153,7 @@ export default function GuestAccess({
                 checked={remember}
                 onChange={(event) => setRemember(event.target.checked)}
               />
-              <span>이 기기에서 인증 유지</span>
+              <span>이 기기에서 연락처 유지</span>
             </label>
             <button
               className="primary"
@@ -192,27 +190,13 @@ export default function GuestAccess({
             </button>
             <span className="identity-kicker">연락처 확인</span>
             <h2 id="identity-title">
-              이용 중인 통신사를
+              주문 안내 연락처를
               <br />
-              선택해 주세요.
+              확인해 주세요.
             </h2>
             <p className="hint">
-              프로토타입에서는 인증 문자가 발송되지 않습니다.
+              통신사 본인인증이 아닌 비회원 주문 연락처 확인 절차입니다.
             </p>
-            <div className="carrier-grid">
-              {["SKT", "KT", "LG U+", "알뜰폰"].map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  className={carrier === item ? "selected" : ""}
-                  aria-pressed={carrier === item}
-                  disabled={busy}
-                  onClick={() => setCarrier(item)}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
             <div className="identity-phone">
               {phone.slice(0, 3)}-{phone.slice(3, -4)}-{phone.slice(-4)}
             </div>

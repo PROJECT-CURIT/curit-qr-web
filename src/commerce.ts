@@ -1,3 +1,4 @@
+import { ANONYMOUS, loadTossPayments } from "@tosspayments/tosspayments-sdk"
 import { presentationRequest } from "./presentation"
 import { validateSnapshot, type QrSnapshot } from "./qrSnapshot"
 
@@ -6,6 +7,20 @@ const environment = (import.meta as ImportMeta & {
 }).env
 
 const apiBaseUrl = (environment.VITE_API_BASE_URL || "").replace(/\/$/, "")
+const ACCESS_TOKEN_KEY = "curit.qr.access-token.v1"
+
+function accessToken() {
+  return (
+    sessionStorage.getItem(ACCESS_TOKEN_KEY) ||
+    localStorage.getItem(ACCESS_TOKEN_KEY) ||
+    ""
+  )
+}
+
+export function clearCommerceSession() {
+  sessionStorage.removeItem(ACCESS_TOKEN_KEY)
+  localStorage.removeItem(ACCESS_TOKEN_KEY)
+}
 
 export const isPresentation = environment.VITE_PRESENTATION_MODE === "true"
 
@@ -35,6 +50,86 @@ export class CommerceError extends Error {
   ) {
     super(message)
   }
+}
+
+export type TossCheckout = {
+  provider: "toss"
+  clientKey: string
+  customerKey: string
+  orderId: string
+  amount: number
+  orderName: string
+  customerName: string
+  successUrl: string
+  failUrl: string
+}
+
+function readTossCheckout(value: unknown): TossCheckout {
+  if (!value || typeof value !== "object")
+    throw new Error("결제 정보를 확인하지 못했어요.")
+  const payment = value as Record<string, unknown>
+  const textFields = [
+    "clientKey",
+    "orderId",
+    "orderName",
+    "successUrl",
+    "failUrl",
+  ] as const
+  if (
+    payment.provider !== "toss" ||
+    !textFields.every(
+      (key) => typeof payment[key] === "string" && Boolean(payment[key]),
+    ) ||
+    !Number.isSafeInteger(payment.amount) ||
+    Number(payment.amount) < 1
+  )
+    throw new Error("결제 정보를 확인하지 못했어요.")
+  return {
+    provider: "toss",
+    clientKey: String(payment.clientKey),
+    customerKey:
+      typeof payment.customerKey === "string"
+        ? payment.customerKey
+        : "ANONYMOUS",
+    orderId: String(payment.orderId),
+    amount: Number(payment.amount),
+    orderName: String(payment.orderName),
+    customerName:
+      typeof payment.customerName === "string" ? payment.customerName : "",
+    successUrl: String(payment.successUrl),
+    failUrl: String(payment.failUrl),
+  }
+}
+
+export async function requestTossPayment(
+  value: unknown,
+  method: "card" | "kakaopay" | "tosspay",
+  phone: string,
+) {
+  const checkout = readTossCheckout(value)
+  const tossPayments = await loadTossPayments(checkout.clientKey)
+  const payment = tossPayments.payment({
+    customerKey:
+      checkout.customerKey === "ANONYMOUS" ? ANONYMOUS : checkout.customerKey,
+  })
+  const easyPay =
+    method === "kakaopay"
+      ? "카카오페이"
+      : method === "tosspay"
+        ? "토스페이"
+        : null
+  await payment.requestPayment({
+    method: "CARD",
+    amount: { currency: "KRW", value: checkout.amount },
+    orderId: checkout.orderId,
+    orderName: checkout.orderName,
+    customerName: checkout.customerName,
+    customerMobilePhone: phone,
+    successUrl: checkout.successUrl,
+    failUrl: checkout.failUrl,
+    windowTarget: "self",
+    card: easyPay ? { flowMode: "DIRECT", easyPay } : { flowMode: "DEFAULT" },
+  })
 }
 
 export function readPaidOrder(value: unknown): PaidOrder {
@@ -106,7 +201,10 @@ export async function commerceRequest(
     response = await fetch(apiBaseUrl + path, {
       method: body ? "POST" : "GET",
       credentials: "include",
-      headers: body ? { "Content-Type": "application/json" } : undefined,
+      headers: {
+        ...(body ? { "Content-Type": "application/json" } : {}),
+        ...(accessToken() ? { Authorization: `Bearer ${accessToken()}` } : {}),
+      },
       body: body ? JSON.stringify(body) : undefined,
       signal: AbortSignal.timeout(20000),
       cache: "no-store",
@@ -120,13 +218,23 @@ export async function commerceRequest(
     )
   }
   const result = await response.json()
-  if (!response.ok)
+  if (!response.ok) {
+    if (response.status === 401) clearCommerceSession()
     throw new CommerceError(
       typeof result?.message === "string"
         ? result.message
         : "요청을 처리하지 못했어요. 다시 시도해 주세요.",
       response.status,
     )
+  }
+  if (
+    path === "/api/auth/identity/start" &&
+    typeof result?.accessToken === "string"
+  ) {
+    clearCommerceSession()
+    const target = body?.remember === true ? localStorage : sessionStorage
+    target.setItem(ACCESS_TOKEN_KEY, result.accessToken)
+  }
   return result
 }
 

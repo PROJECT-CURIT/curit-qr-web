@@ -1,14 +1,17 @@
 const CACHE = "curit-qr-v2"
+const SCOPE = new URL(self.registration.scope)
+const BASE_PATH = SCOPE.pathname.replace(/\/$/, "")
+const scoped = (path = "") => `${BASE_PATH}/${path}`
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
       .then((cache) =>
         cache.addAll([
-          "/",
-          "/manifest.webmanifest",
-          "/app-icon-192.png",
-          "/app-icon-512.png",
+          scoped(),
+          scoped("manifest.webmanifest"),
+          scoped("app-icon-192.png"),
+          scoped("app-icon-512.png"),
         ]),
       ),
   )
@@ -44,18 +47,18 @@ self.addEventListener("fetch", (event) => {
         .then((response) => {
           if (response.ok) {
             const clone = response.clone()
-            caches.open(CACHE).then((cache) => cache.put("/", clone))
+            caches.open(CACHE).then((cache) => cache.put(scoped(), clone))
           }
           return response
         })
-        .catch(() => caches.match("/")),
+        .catch(() => caches.match(scoped())),
     )
     return
   }
   if (
-    !url.pathname.startsWith("/assets/") &&
-    !url.pathname.startsWith("/artworks/") &&
-    !url.pathname.startsWith("/app-icon-")
+    !url.pathname.startsWith(scoped("assets/")) &&
+    !url.pathname.startsWith(scoped("artworks/")) &&
+    !url.pathname.startsWith(scoped("app-icon-"))
   )
     return
   event.respondWith(caches.match(event.request).then(
