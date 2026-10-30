@@ -2,14 +2,22 @@ export const fieldProducts = {
   kendama: {
     name: "켄다마",
     image: "kendama.png",
+    subtitle: "한 번 더 도전하고 싶은 손끝 놀이",
+    category: "놀이 · 라이프스타일",
+    tags: ["켄다마", "손끝 놀이", "현장 수령"],
+    composition: "켄다마 1개",
     description:
-      "공을 컵에 올리며 즐기는 장난감이에요. 매장에서 색상과 실물을 확인해 주세요.",
+      "공을 컵으로 받아 보세요. 한 번의 성공이 또 한 번의 도전으로 이어져요. 매장에 전시된 색상과 실물을 확인한 뒤 골라 주세요.",
   },
   "dango-keyring": {
-    name: "당고 키링",
+    name: "고양이 당고 키링",
     image: "dango-keyring.png",
+    subtitle: "가방에 달아 두는 작은 귀여움",
+    category: "키링 · 라이프스타일",
+    tags: ["당고 키링", "가방 소품", "현장 수령"],
+    composition: "키링 1개",
     description:
-      "가방이나 열쇠에 달아 함께하는 고양이 당고 키링이에요. 매장에서 디자인을 골라 주세요.",
+      "당고처럼 모인 하얀 고양이 세 마리. 가방이나 열쇠에 귀여운 포인트를 더해 보세요. 매장에서 디자인과 실물을 확인해 주세요.",
   },
 } as const
 

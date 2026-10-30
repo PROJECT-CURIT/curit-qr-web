@@ -1,6 +1,10 @@
-import { describe, expect, it } from "vitest"
+import { createElement } from "react"
+import { renderToStaticMarkup } from "react-dom/server"
+import { describe, expect, it, vi } from "vitest"
+import FieldSale from "./FieldSale"
 import {
   fieldProductId,
+  fieldProducts,
   readFieldSaleConfig,
   transferAmount,
 } from "./fieldSaleConfig"
@@ -15,6 +19,26 @@ const config = {
 }
 
 describe("field-sale transfer guidance", () => {
+  it("keeps field-sale links in the original product layout without enabling unconfigured payment", () => {
+    try {
+      for (const id of ["kendama", "dango-keyring"] as const) {
+        vi.stubGlobal("location", { search: `?buy=${id}` })
+        const html = renderToStaticMarkup(createElement(FieldSale))
+        expect(html).toContain(`>${fieldProducts[id].name}</h1>`)
+        expect(html).toContain('class="detail-grid"')
+        expect(html).toContain('class="hero-copy"')
+        expect(html).toContain('class="purchase-bar"')
+        expect(html).toMatch(
+          /<button(?=[^>]*class="primary")(?=[^>]*disabled="")[^>]*>/,
+        )
+        expect(html).not.toContain("김서연")
+        expect(html).not.toContain("계좌번호 복사")
+        expect(html).not.toContain("주문 완료")
+      }
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
   it("accepts only the two known products, without inheriting object properties", () => {
     expect(fieldProductId("kendama")).toBe("kendama")
     expect(fieldProductId("dango-keyring")).toBe("dango-keyring")

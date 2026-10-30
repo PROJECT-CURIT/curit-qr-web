@@ -31,7 +31,7 @@ type IconProps = {
   size?: number
 }
 
-function Icon({ name, size = 20 }: IconProps) {
+export function Icon({ name, size = 20 }: IconProps) {
   const paths: Record<string, string> = {
     back: "M15 5l-7 7 7 7",
     receipt: "M6 3h12v18l-3-2-3 2-3-2-3 2V3Zm3 4h6M9 11h6M9 15h3",
