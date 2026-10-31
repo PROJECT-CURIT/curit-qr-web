@@ -73,6 +73,7 @@ export default function App() {
       qrToken ? "loading" : "idle",
     )
   const [listingError, setListingError] = useState("")
+  const [listingAttempt, setListingAttempt] = useState(0)
   const initialId =
     new URLSearchParams(window.location.search).get("artwork") || "0-0"
   const [productId, setProductId] = useState(initialId)
@@ -155,7 +156,7 @@ export default function App() {
     return () => {
       active = false
     }
-  }, [qrToken])
+  }, [qrToken, listingAttempt])
   const expireSession = useCallback(() => {
     confirmationStarted.current = false
     setSessionStatus("guest")
@@ -384,6 +385,13 @@ export default function App() {
       <main className="not-found">
         <h1>구매 링크를 확인해 주세요</h1>
         <p role="alert">{listingError}</p>
+        <button
+          className="primary"
+          type="button"
+          onClick={() => setListingAttempt((attempt) => attempt + 1)}
+        >
+          다시 시도
+        </button>
       </main>
     )
   if (accessIntent)
