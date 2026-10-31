@@ -358,6 +358,17 @@ export function checkoutDestination(value: unknown) {
   return destination.href
 }
 
+export function paymentFailureFromSearch(search: string) {
+  const params = new URLSearchParams(search)
+  if (params.get("payment") !== "fail") return null
+  const orderId = params.get("orderId") || params.get("order") || ""
+  return {
+    orderId: /^QR-[0-9a-f-]+$/i.test(orderId) ? orderId : "",
+    message:
+      params.get("message") || "결제가 취소되었거나 인증에 실패했습니다.",
+  }
+}
+
 export const pickup = {
   cafe: environment.VITE_CAFE_NAME || "큐리티 카페",
   phone: environment.VITE_CAFE_PHONE || "",

@@ -16,9 +16,32 @@ vi.mock("@tosspayments/tosspayments-sdk", () => ({
 
 import {
   loadQrListing,
+  paymentFailureFromSearch,
   PaymentWindowCancelledError,
   requestTossPayment,
 } from "./commerce"
+
+describe("payment return parsing", () => {
+  it("extracts a valid failed Toss order for server cleanup", () => {
+    expect(
+      paymentFailureFromSearch(
+        "?payment=fail&orderId=QR-79c005f4-ead6-416e-9279-c29d855aae2a&message=%EA%B2%B0%EC%A0%9C%20%EC%B7%A8%EC%86%8C",
+      ),
+    ).toEqual({
+      orderId: "QR-79c005f4-ead6-416e-9279-c29d855aae2a",
+      message: "결제 취소",
+    })
+  })
+
+  it("does not send an untrusted order id to the abandon endpoint", () => {
+    expect(
+      paymentFailureFromSearch(
+        "?payment=fail&orderId=../../orders&message=failed",
+      ),
+    ).toEqual({ orderId: "", message: "failed" })
+    expect(paymentFailureFromSearch("?payment=success")).toBeNull()
+  })
+})
 
 const snapshot = {
   v: 1,

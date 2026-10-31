@@ -5,6 +5,7 @@ import {
   checkoutDestination,
   commerceRequest,
   loadQrListing,
+  paymentFailureFromSearch,
   pickupForArtwork,
   readPaidOrder,
   requestTossPayment,
@@ -118,6 +119,7 @@ export default function App() {
   const [paymentError, setPaymentError] = useState("")
   const confirmationStarted = useRef(false)
   const checkoutStarted = useRef(false)
+  const abandonedOrder = useRef("")
   const [confirmationAttempt, setConfirmationAttempt] = useState(0)
   const [gallery, setGallery] = useState(false)
   const [sessionStatus, setSessionStatus] =
@@ -265,11 +267,20 @@ export default function App() {
   }, [gallery])
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    if (params.get("payment") === "fail") {
+    const paymentFailure = paymentFailureFromSearch(window.location.search)
+    if (paymentFailure) {
       setStage("checkout")
-      setPaymentError(
-        params.get("message") || "결제가 취소되었거나 인증에 실패했습니다.",
-      )
+      setPaymentError(paymentFailure.message)
+      if (
+        paymentFailure.orderId &&
+        abandonedOrder.current !== paymentFailure.orderId
+      ) {
+        abandonedOrder.current = paymentFailure.orderId
+        void commerceRequest(
+          `/api/checkout/${encodeURIComponent(paymentFailure.orderId)}/abandon`,
+          {},
+        ).catch(() => undefined)
+      }
       return
     }
     const order = params.get("order") || params.get("orderId")
