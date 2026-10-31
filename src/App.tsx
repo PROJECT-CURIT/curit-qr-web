@@ -185,6 +185,8 @@ export default function App() {
   }, [sessionStatus, accessIntent])
   useEffect(() => {
     let active = true
+    setSessionStatus("loading")
+    setSessionError("")
     commerceRequest("/api/auth/session")
       .then((result) => {
         if (!active) return
@@ -209,7 +211,7 @@ export default function App() {
     return () => {
       active = false
     }
-  }, [])
+  }, [listingAttempt])
   useEffect(() => {
     const handlePop = () => {
       const nextToken = readQrToken()
@@ -681,6 +683,7 @@ export default function App() {
               </div>
               <button
                 className="artist-line"
+                aria-label={`${product.project.artist} 작가 정보로 이동`}
                 onClick={() =>
                   document
                     .getElementById("artist")
