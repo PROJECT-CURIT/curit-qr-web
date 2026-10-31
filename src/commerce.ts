@@ -11,6 +11,18 @@ const apiFunctionRegion =
   environment.VITE_SUPABASE_FUNCTION_REGION || "ap-northeast-2"
 const gatewayToken = environment.VITE_SUPABASE_ANON_KEY || ""
 const ACCESS_TOKEN_KEY = "curit.qr.access-token.v1"
+const VISITOR_ID_KEY = "curit.qr.visitor-id.v1"
+
+function qrVisitorId() {
+  const existing = localStorage.getItem(VISITOR_ID_KEY)
+  if (existing && /^[A-Za-z0-9_-]{16,128}$/.test(existing)) return existing
+  const created =
+    typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `visitor-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+  localStorage.setItem(VISITOR_ID_KEY, created)
+  return created
+}
 
 function accessToken() {
   return (
@@ -255,6 +267,9 @@ export async function commerceRequest(
             ? { Authorization: `Bearer ${sessionToken}` }
             : {}),
         ...(sessionToken ? { "x-curit-session": sessionToken } : {}),
+        ...(path.startsWith("/api/v1/qr/")
+          ? { "x-curit-visitor-id": qrVisitorId() }
+          : {}),
       },
       body: body ? JSON.stringify(body) : undefined,
       signal: AbortSignal.timeout(20000),
