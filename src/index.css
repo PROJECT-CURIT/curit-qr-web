@@ -91,7 +91,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:#fff}body{ma
   .delivery-note p { margin-top: 6px; font-size: 11px; }
   .quantity-line { margin-top: 26px; gap: 12px; }
   .quantity-line > span { line-height: 1.7; }
-  .quantity-line small { display: block; margin: 3px 0 0; }
+  .quantity-line small { display: block; margin: 3px 0 0; color: var(--muted); }
   .stepper { height: 44px; flex-shrink: 0; border-radius: 10px; }
   .stepper button { width: 44px; height: 42px; }
   .stepper output { width: 28px; font-size: 13px; }

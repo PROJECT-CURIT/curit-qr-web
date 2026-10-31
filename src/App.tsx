@@ -560,7 +560,7 @@ export default function App() {
         <button
           className="wordmark"
           onClick={() => navigate("detail")}
-          aria-label="큐릿 작품 상세"
+          aria-label="CURI:T 큐릿 작품 상세"
         >
           <span className="brand-logo" aria-hidden="true">
             CURI:T
