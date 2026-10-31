@@ -1,5 +1,20 @@
-import { afterEach, describe, expect, it, vi } from "vitest"
-import { loadQrListing } from "./commerce"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+
+const paymentMocks = vi.hoisted(() => ({
+  load: vi.fn(),
+  setAmount: vi.fn(),
+  renderPaymentWindow: vi.fn(),
+  requestPayment: vi.fn(),
+  destroy: vi.fn(),
+  callbacks: {} as Record<string, () => Promise<void>>,
+}))
+
+vi.mock("@tosspayments/tosspayments-sdk", () => ({
+  ANONYMOUS: "ANONYMOUS",
+  loadTossPayments: paymentMocks.load,
+}))
+
+import { loadQrListing, requestTossPayment } from "./commerce"
 
 const snapshot = {
   v: 1,
@@ -60,5 +75,77 @@ describe("QR visit analytics", () => {
     expect(firstId).toBeTruthy()
     expect(values.get("curit.qr.visitor-id.v1")).toBe(firstId)
     expect(request).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe("Toss widget payment window", () => {
+  const checkout = {
+    provider: "toss",
+    clientKey: "test_gck_docs_example",
+    customerKey: "ANONYMOUS",
+    orderId: "order_test_123",
+    amount: 55000,
+    orderName: "제주빛 디저트 플레이트",
+    customerName: "최선문",
+    successUrl: "https://example.com/success",
+    failUrl: "https://example.com/fail",
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    Object.keys(paymentMocks.callbacks).forEach(
+      (key) => delete paymentMocks.callbacks[key],
+    )
+    paymentMocks.setAmount.mockResolvedValue(undefined)
+    paymentMocks.requestPayment.mockResolvedValue(undefined)
+    paymentMocks.destroy.mockResolvedValue(undefined)
+    paymentMocks.renderPaymentWindow.mockResolvedValue({
+      on: (name: string, callback: () => Promise<void>) => {
+        paymentMocks.callbacks[name] = callback
+      },
+      destroy: paymentMocks.destroy,
+    })
+    paymentMocks.load.mockResolvedValue({
+      widgets: () => ({
+        setAmount: paymentMocks.setAmount,
+        renderPaymentWindow: paymentMocks.renderPaymentWindow,
+        requestPayment: paymentMocks.requestPayment,
+      }),
+    })
+  })
+
+  it("renders the current payment-window API before requesting payment", async () => {
+    const payment = requestTossPayment(checkout, "card", "01012345678")
+    await vi.waitFor(() =>
+      expect(paymentMocks.renderPaymentWindow).toHaveBeenCalledOnce(),
+    )
+
+    await paymentMocks.callbacks.paymentRequest()
+    await payment
+
+    expect(paymentMocks.setAmount).toHaveBeenCalledWith({
+      currency: "KRW",
+      value: 55000,
+    })
+    expect(paymentMocks.requestPayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderId: checkout.orderId,
+        successUrl: checkout.successUrl,
+        failUrl: checkout.failUrl,
+        windowTarget: "self",
+      }),
+    )
+  })
+
+  it("returns control to the checkout when the buyer closes the window", async () => {
+    const payment = requestTossPayment(checkout, "card", "01012345678")
+    const rejection = expect(payment).rejects.toThrow("결제를 취소했어요")
+    await vi.waitFor(() =>
+      expect(paymentMocks.callbacks.cancel).toBeTypeOf("function"),
+    )
+
+    await paymentMocks.callbacks.cancel()
+    await rejection
+    expect(paymentMocks.requestPayment).not.toHaveBeenCalled()
   })
 })

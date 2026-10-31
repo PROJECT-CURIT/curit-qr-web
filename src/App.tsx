@@ -1099,6 +1099,10 @@ export default function App() {
                       </button>
                     ))}
                   </div>
+                  <p className="hint">
+                    시연 환경에서는 토스 테스트 결제창에서 결제수단을 최종
+                    선택합니다.
+                  </p>
                   {payment === "카드 결제" ? (
                     <div className="card-options">
                       <PaymentSelect

@@ -143,23 +143,40 @@ export async function requestTossPayment(
     const widgets = tossPayments.widgets({ customerKey })
     const amount = { currency: "KRW" as const, value: checkout.amount }
     await widgets.setAmount(amount)
-    await widgets.requestPaymentWindow(
-      {
-        amount,
-        orderId: checkout.orderId,
-        orderName: checkout.orderName,
-        customerName: checkout.customerName,
-        customerMobilePhone: phone,
-        successUrl: checkout.successUrl,
-        failUrl: checkout.failUrl,
+    const paymentWindow = await widgets.renderPaymentWindow({
+      orderName: checkout.orderName,
+      variantKey: {
+        paymentMethod: "DEFAULT",
+        agreement: "AGREEMENT",
       },
-      {
-        variantKey: {
-          paymentMethod: "DEFAULT",
-          agreement: "AGREEMENT",
-        },
-      },
-    )
+    })
+    await new Promise<void>((resolve, reject) => {
+      let finished = false
+      paymentWindow.on("paymentRequest", async () => {
+        if (finished) return
+        finished = true
+        try {
+          await widgets.requestPayment({
+            orderId: checkout.orderId,
+            orderName: checkout.orderName,
+            customerName: checkout.customerName,
+            customerMobilePhone: phone,
+            successUrl: checkout.successUrl,
+            failUrl: checkout.failUrl,
+            windowTarget: "self",
+          })
+          resolve()
+        } catch (error) {
+          await paymentWindow.destroy().catch(() => undefined)
+          reject(error)
+        }
+      })
+      paymentWindow.on("cancel", async () => {
+        if (finished) return
+        finished = true
+        reject(new Error("결제를 취소했어요. 다시 시도해 주세요."))
+      })
+    })
     return
   }
 
