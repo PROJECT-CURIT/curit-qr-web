@@ -1,4 +1,3 @@
-import { ANONYMOUS, loadTossPayments } from "@tosspayments/tosspayments-sdk"
 import { presentationRequest } from "./presentation"
 import { validateSnapshot, type QrSnapshot } from "./qrSnapshot"
 
@@ -137,6 +136,9 @@ export async function requestTossPayment(
   phone: string,
 ) {
   const checkout = readTossCheckout(value)
+  const { ANONYMOUS, loadTossPayments } = await import(
+    "@tosspayments/tosspayments-sdk"
+  )
   const tossPayments = await loadTossPayments(checkout.clientKey)
   const customerKey =
     checkout.customerKey === "ANONYMOUS" ? ANONYMOUS : checkout.customerKey
