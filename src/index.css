@@ -92,8 +92,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:#fff}body{ma
   .quantity-line { margin-top: 26px; gap: 12px; }
   .quantity-line > span { line-height: 1.7; }
   .quantity-line small { display: block; margin: 3px 0 0; color: var(--muted); }
-  .stepper { height: 44px; flex-shrink: 0; border-radius: 10px; }
-  .stepper button { width: 44px; height: 42px; }
+  .stepper { height: 46px; flex-shrink: 0; border-radius: 10px; }
+  .stepper button { width: 44px; height: 44px; }
   .stepper output { width: 28px; font-size: 13px; }
   .sample-note { line-height: 1.7; margin-top: 15px; }
   .content-grid { margin-top: 34px; gap: 36px; }
@@ -183,6 +183,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:#fff}body{ma
 .wallet-options > p { grid-column: 1 / -1; margin: 2px 0 0; }
 .policy-details { margin: 0 0 18px; padding: 0 0 15px; }
 .policy-details summary { font-size: 11px; color: var(--muted); }
+.policy-details summary { display: flex; align-items: center; min-height: 44px; }
 .policy-details p { font-size: 11px; color: var(--muted); line-height: 1.8; }
 .payment-error { font-size: 12px; color: #9b442d; background: #fff5f0; padding: 12px; border-radius: 8px; line-height: 1.7; }
 .summary-hint { text-align: center; margin-bottom: 0; }
@@ -269,7 +270,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:#fff}body{ma
 .inline-support { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; background: #f7f8f5; border-radius: 11px; padding: 14px 15px; margin: 18px 0; text-align: left; color: var(--green); }
 .inline-support > svg { flex-shrink: 0; }
 .inline-support strong { font-size: 10px; color: var(--muted); font-weight: 500; display: block; margin-bottom: 5px; }
-.inline-support a { display: block; font-size: 12px; color: var(--green); text-decoration: none; line-height: 1.7; }
+.inline-support a { display: flex; align-items: center; min-height: 44px; font-size: 12px; color: var(--green); text-decoration: none; line-height: 1.7; }
 .complete .inline-support { margin-top: 20px; margin-bottom: 10px; }
 .complete .receipt-tools { margin-top: 0; }
 @media (max-width: 680px) {
