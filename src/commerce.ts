@@ -75,6 +75,13 @@ export class CommerceError extends Error {
   }
 }
 
+export class PaymentWindowCancelledError extends Error {
+  constructor(public readonly orderId: string) {
+    super("결제를 취소했어요. 다시 시도해 주세요.")
+    this.name = "PaymentWindowCancelledError"
+  }
+}
+
 export type TossCheckout = {
   provider: "toss"
   clientKey: string
@@ -174,7 +181,7 @@ export async function requestTossPayment(
       paymentWindow.on("cancel", async () => {
         if (finished) return
         finished = true
-        reject(new Error("결제를 취소했어요. 다시 시도해 주세요."))
+        reject(new PaymentWindowCancelledError(checkout.orderId))
       })
     })
     return

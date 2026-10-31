@@ -9,6 +9,7 @@ import {
   readPaidOrder,
   requestTossPayment,
   CommerceError,
+  PaymentWindowCancelledError,
   isPresentation,
   type PaidOrder,
 } from "./commerce"
@@ -523,7 +524,13 @@ export default function App() {
         window.location.assign(checkoutDestination(result.checkoutUrl))
       }
     } catch (error) {
-      if (error instanceof CommerceError && error.status === 401)
+      if (error instanceof PaymentWindowCancelledError) {
+        await commerceRequest(
+          `/api/checkout/${encodeURIComponent(error.orderId)}/abandon`,
+          {},
+        ).catch(() => undefined)
+        setPaymentError(error.message)
+      } else if (error instanceof CommerceError && error.status === 401)
         expireSession()
       else
         setPaymentError(

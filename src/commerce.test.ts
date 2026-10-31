@@ -14,7 +14,11 @@ vi.mock("@tosspayments/tosspayments-sdk", () => ({
   loadTossPayments: paymentMocks.load,
 }))
 
-import { loadQrListing, requestTossPayment } from "./commerce"
+import {
+  loadQrListing,
+  PaymentWindowCancelledError,
+  requestTossPayment,
+} from "./commerce"
 
 const snapshot = {
   v: 1,
@@ -139,13 +143,16 @@ describe("Toss widget payment window", () => {
 
   it("returns control to the checkout when the buyer closes the window", async () => {
     const payment = requestTossPayment(checkout, "card", "01012345678")
-    const rejection = expect(payment).rejects.toThrow("결제를 취소했어요")
     await vi.waitFor(() =>
       expect(paymentMocks.callbacks.cancel).toBeTypeOf("function"),
     )
 
     await paymentMocks.callbacks.cancel()
-    await rejection
+    await expect(payment).rejects.toMatchObject({
+      name: PaymentWindowCancelledError.name,
+      orderId: checkout.orderId,
+      message: expect.stringContaining("결제를 취소했어요"),
+    })
     expect(paymentMocks.requestPayment).not.toHaveBeenCalled()
   })
 })
