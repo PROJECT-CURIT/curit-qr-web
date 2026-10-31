@@ -311,6 +311,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:#fff}body{ma
 .purchase-support > span { font-size: 11px; color: var(--muted); }
 .app-complete .purchase-support { max-width: 432px; }
 .wordmark { min-height: 44px; padding-inline: 4px; }
+.agreement { min-height: 44px; cursor: pointer; }
 .agreement input { width: 20px; height: 20px; flex: 0 0 20px; margin: 1px 0 0; }
 @media (max-width: 680px) {
   .app.app-access, .app.app-orders, .app.app-confirming { padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
