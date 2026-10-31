@@ -310,6 +310,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:#fff}body{ma
 .purchase-support a { display: inline-flex; align-items: center; justify-content: center; gap: 7px; color: var(--green); font-size: 12px; min-height: 44px; text-decoration: none; }
 .purchase-support > span { font-size: 11px; color: var(--muted); }
 .app-complete .purchase-support { max-width: 432px; }
+.wordmark { min-height: 44px; padding-inline: 4px; }
+.agreement input { width: 20px; height: 20px; flex: 0 0 20px; margin: 1px 0 0; }
 @media (max-width: 680px) {
   .app.app-access, .app.app-orders, .app.app-confirming { padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
   .guest-access { margin-top: 24px; }
