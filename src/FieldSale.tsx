@@ -467,8 +467,7 @@ export default function FieldSale() {
             </div>
             <aside className="related">
               <div className="section-title">
-                <h3>함께 전시 중인 상품</h3>
-                <span>이 공간에서 만나보세요</span>
+                <h3>큐릿에서 전시 중인 상품</h3>
               </div>
               {Object.entries(fieldProducts)
                 .filter(([otherId]) => otherId !== id)
