@@ -479,7 +479,11 @@ export default function FieldSale() {
                     </div>
                   )}
                   <div className="field-story-buying">
-                    <h3>데려가기 전에</h3>
+                    <h3>
+                      {id === "poetry-postcards"
+                        ? "구매 전 확인해 주세요"
+                        : "데려가기 전에"}
+                    </h3>
                     <p>{product.buyingNote}</p>
                   </div>
                 </section>
