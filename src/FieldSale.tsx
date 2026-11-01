@@ -383,6 +383,29 @@ export default function FieldSale() {
                       {paragraph}
                     </p>
                   ))}
+                  <figure className="field-story-photo">
+                    <img
+                      src={asset(product.image)}
+                      alt={`${product.name} 상품 참고 사진`}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <figcaption>{product.photoCaption}</figcaption>
+                  </figure>
+                  {product.details.map((detail) => (
+                    <section className="field-story-detail" key={detail.title}>
+                      <h3>{detail.title}</h3>
+                      <p>{detail.body}</p>
+                    </section>
+                  ))}
+                  <section className="field-story-ideas">
+                    <h3>{product.ideasTitle}</h3>
+                    <ul>
+                      {product.ideas.map((idea) => (
+                        <li key={idea}>{idea}</li>
+                      ))}
+                    </ul>
+                  </section>
                   {id === "kendama" && (
                     <div className="field-video">
                       <h3>켄다마 고수의 플레이</h3>
@@ -409,6 +432,10 @@ export default function FieldSale() {
                       </p>
                     </div>
                   )}
+                  <div className="field-story-buying">
+                    <h3>데려가기 전에</h3>
+                    <p>{product.buyingNote}</p>
+                  </div>
                 </section>
               ) : tab === "상품 정보" ? (
                 <section className="info-section">
