@@ -25,6 +25,7 @@ const support = (
 export default function FieldSale() {
   const id = fieldProductId(new URLSearchParams(location.search).get("buy"))
   const product = id ? fieldProducts[id] : null
+  const unit = id === "poetry-postcards" ? "장" : "개"
   const [config, setConfig] = useState<FieldSaleConfig | null>(null)
   const [error, setError] = useState("")
   const [attempt, setAttempt] = useState(0)
@@ -186,7 +187,8 @@ export default function FieldSale() {
                     <small>매장 현장 수령</small>
                     <strong>{product.name}</strong>
                     <p>
-                      {money(offer!.price!)} · {quantity}개
+                      {money(offer!.price!)} · {quantity}
+                      {unit}
                     </p>
                   </div>
                 </div>
@@ -235,7 +237,10 @@ export default function FieldSale() {
                 </div>
                 <div>
                   <dt>구매 수량</dt>
-                  <dd>{quantity}개</dd>
+                  <dd>
+                    {quantity}
+                    {unit}
+                  </dd>
                 </div>
                 <div className="total">
                   <dt>총 상품 금액</dt>
@@ -305,7 +310,7 @@ export default function FieldSale() {
                   <small>
                     {offer?.quantity == null
                       ? "재고는 매장에서 확인해 주세요"
-                      : "남은 수량 " + offer.quantity + "개"}
+                      : "남은 수량 " + offer.quantity + unit}
                   </small>
                 </span>
                 <div className="stepper">
@@ -423,7 +428,11 @@ export default function FieldSale() {
                     </div>
                     <div>
                       <dt>색상 · 디자인</dt>
-                      <dd>매장에서 실물 확인</dd>
+                      <dd>
+                        {id === "octopus-keyring"
+                          ? "색상 선택 없이 현장 상품으로 제공"
+                          : "매장에서 실물 확인"}
+                      </dd>
                     </div>
                     <div>
                       <dt>수령 방법</dt>

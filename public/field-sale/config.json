@@ -4,7 +4,7 @@
   "products": {
     "kendama": { "price": 8000, "quantity": null },
     "dango-keyring": { "price": 5000, "quantity": null },
-    "octopus-keyring": { "price": null, "quantity": null },
-    "poetry-postcards": { "price": null, "quantity": null }
+    "octopus-keyring": { "price": 2000, "quantity": 8 },
+    "poetry-postcards": { "price": 1000, "quantity": 6 }
   }
 }

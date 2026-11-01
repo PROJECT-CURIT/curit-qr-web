@@ -27,7 +27,7 @@ export const fieldProducts = {
   },
   "octopus-keyring": {
     name: "양면 문어 키링",
-    image: "octopus-keyring.jpg",
+    image: "octopus-keyring-photo.jpg",
     subtitle: "오늘 기분은.. 뒤집어 보세요!",
     category: "키링 · 라이프스타일",
     tags: ["양면 문어", "가방 소품", "현장 수령"],
@@ -35,20 +35,20 @@ export const fieldProducts = {
     description: "뒤집으면 다른 표정이 나타나는 작은 문어 키링.",
     story: [
       "방긋 웃는 날도, 살짝 심술나는 날도 있잖아요. 오늘 기분에 맞는 얼굴로 뒤집어 가방에 달아 주세요.",
-      "작은 문어 한 마리로 전하는 오늘의 기분! 색상과 양면 조합은 매장에 놓인 실물을 보고 골라 주세요.",
+      "작은 문어 한 마리로 전하는 오늘의 기분! 별도 색상 선택 없이 매장에 준비된 상품으로 제공해요.",
     ],
   },
   "poetry-postcards": {
     name: "나태주 시 엽서",
-    image: "poetry-postcards.jpg",
+    image: "poetry-postcards-photo.jpg",
     subtitle: "하고 싶던 말, 한 장에 담아서.",
     category: "엽서 · 문구",
     tags: ["나태주", "시 엽서", "현장 수령"],
-    composition: "판매 단위와 구성은 매장에서 확인",
+    composition: "엽서 1장 · 낱장 판매",
     description: "나태주 시인의 시와 그림을 담은 엽서.",
     story: [
       "마음은 있는데 무슨 말을 적어야 할지 모르겠는 날. 마음에 닿는 엽서를 골라, 전하고 싶었던 한마디를 덧붙여 보세요.",
-      "누군가에게 건네도, 내 책상 곁에 두어도 좋아요. 엽서 디자인과 판매 구성은 매장에서 실물로 확인해 주세요.",
+      "누군가에게 건네도, 내 책상 곁에 두어도 좋아요. 엽서는 세트가 아닌 낱장으로 판매하며, 매장에서 실물을 확인하실 수 있어요.",
     ],
   },
 } as const
