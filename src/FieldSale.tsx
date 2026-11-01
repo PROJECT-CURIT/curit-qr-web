@@ -184,7 +184,7 @@ export default function FieldSale() {
                 <div className="order-product">
                   <img src={asset(product.image)} alt={product.name} />
                   <div>
-                    <small>매장 현장 수령</small>
+                    <small>현장 수령</small>
                     <strong>{product.name}</strong>
                     <p>
                       {money(offer!.price!)} · {quantity}
@@ -222,8 +222,8 @@ export default function FieldSale() {
                   <span>이체 후 현장 수령</span>
                 </h2>
                 <p className="hint">
-                  판매자에게 실제 입금 확인을 요청한 뒤 상품을 받아 주세요. 이
-                  화면은 결제 완료 증빙이 아니에요.
+                  판매자에게 입금 확인을 받은 뒤 상품을 받아 가세요. 이
+                  화면만으로는 입금 완료를 확인할 수 없어요.
                 </p>
                 {support}
               </section>
@@ -232,7 +232,7 @@ export default function FieldSale() {
               <h2>입금할 금액</h2>
               <dl>
                 <div>
-                  <dt>상품 금액</dt>
+                  <dt>상품 단가</dt>
                   <dd>{money(offer!.price!)}</dd>
                 </div>
                 <div>
@@ -300,7 +300,7 @@ export default function FieldSale() {
               <div className="delivery-note">
                 <Icon name="box" />
                 <div>
-                  <strong>마음에 든 상품을, 지금 이 공간에서</strong>
+                  <strong>입금 확인 후 바로 받아 가세요</strong>
                   <p>계좌이체 · 입금 확인 후 현장 수령</p>
                 </div>
               </div>
@@ -479,17 +479,13 @@ export default function FieldSale() {
                     </div>
                   )}
                   <div className="field-story-buying">
-                    <h3>
-                      {id === "poetry-postcards"
-                        ? "구매 전 확인해 주세요"
-                        : "데려가기 전에"}
-                    </h3>
+                    <h3>구매 전 확인해 주세요</h3>
                     <p>{product.buyingNote}</p>
                   </div>
                 </section>
               ) : tab === "상품 정보" ? (
                 <section className="info-section">
-                  <h2>상품을 조금 더 알아보세요</h2>
+                  <h2>상품 상세 정보</h2>
                   <dl>
                     <div>
                       <dt>상품명</dt>
