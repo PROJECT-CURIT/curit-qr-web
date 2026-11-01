@@ -41,6 +41,10 @@ describe("field-sale transfer guidance", () => {
         expect(html.includes("youtube-nocookie.com/embed/3QgZeNosWlE")).toBe(
           id === "kendama",
         )
+        expect(html.includes('class="field-story-ideas"')).toBe(
+          id === "octopus-keyring",
+        )
+        expect(html.includes("na-tae-joo.jpg")).toBe(id === "poetry-postcards")
         expect(html).not.toContain("계좌번호 복사")
         expect(html).not.toContain("주문 완료")
       }

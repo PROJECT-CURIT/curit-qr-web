@@ -19,6 +19,8 @@
 .field-story-photo { margin: 32px 0 36px; }
 .field-story-photo img { display: block; width: 100%; max-height: 430px; object-fit: contain; background: var(--soft); border-radius: 12px; }
 .field-story-photo figcaption { margin-top: 10px; font-size: 12px; line-height: 1.7; color: #666; }
+.field-sale .story .field-story-source { margin-top: 24px; font-size: 12px; color: #666; }
+.field-story-photo a, .field-story-source a { color: inherit; text-underline-offset: 3px; }
 .field-story-detail { margin-top: 32px; }
 .field-sale .story h3 { margin: 0 0 12px; font-size: 19px; line-height: 1.5; font-weight: 650; letter-spacing: -0.02em; text-wrap: balance; }
 .field-story-detail p { margin: 0; }

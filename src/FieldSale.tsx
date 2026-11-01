@@ -385,12 +385,44 @@ export default function FieldSale() {
                   ))}
                   <figure className="field-story-photo">
                     <img
-                      src={asset(product.image)}
-                      alt={`${product.name} 상품 참고 사진`}
+                      src={asset(
+                        id === "poetry-postcards"
+                          ? "na-tae-joo.jpg"
+                          : product.image,
+                      )}
+                      alt={
+                        id === "poetry-postcards"
+                          ? "강연 중인 나태주 시인"
+                          : `${product.name} 상품 참고 사진`
+                      }
                       loading="lazy"
                       decoding="async"
                     />
-                    <figcaption>{product.photoCaption}</figcaption>
+                    <figcaption>
+                      {product.photoCaption}
+                      {id === "poetry-postcards" && (
+                        <>
+                          <br />
+                          사진: 오후의 책방 Afternoon Bookstore ·{" "}
+                          <a
+                            href="https://commons.wikimedia.org/wiki/File:%EB%82%98%ED%83%9C%EC%A3%BC_%EC%8B%9C%EC%9D%B8.jpg"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Wikimedia Commons
+                          </a>{" "}
+                          ·{" "}
+                          <a
+                            href="https://creativecommons.org/licenses/by/3.0/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            CC BY 3.0
+                          </a>{" "}
+                          · 원본 사용
+                        </>
+                      )}
+                    </figcaption>
                   </figure>
                   {product.details.map((detail) => (
                     <section className="field-story-detail" key={detail.title}>
@@ -398,14 +430,28 @@ export default function FieldSale() {
                       <p>{detail.body}</p>
                     </section>
                   ))}
-                  <section className="field-story-ideas">
-                    <h3>{product.ideasTitle}</h3>
-                    <ul>
-                      {product.ideas.map((idea) => (
-                        <li key={idea}>{idea}</li>
-                      ))}
-                    </ul>
-                  </section>
+                  {id === "poetry-postcards" && (
+                    <p className="field-story-source">
+                      작가 생애 자료:{" "}
+                      <a
+                        href="https://library.ltikorea.or.kr/writer/201168"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        한국문학번역원 디지털도서관
+                      </a>
+                    </p>
+                  )}
+                  {"ideas" in product && (
+                    <section className="field-story-ideas">
+                      <h3>{product.ideasTitle}</h3>
+                      <ul>
+                        {product.ideas.map((idea) => (
+                          <li key={idea}>{idea}</li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
                   {id === "kendama" && (
                     <div className="field-video">
                       <h3>켄다마 고수의 플레이</h3>
