@@ -7,6 +7,7 @@ import {
   fieldProducts,
   readFieldSaleConfig,
   transferAmount,
+  type FieldProductId,
 } from "./fieldSaleConfig"
 
 const config = {
@@ -15,13 +16,15 @@ const config = {
   products: {
     kendama: { price: 5000, quantity: 2 },
     "dango-keyring": { price: 2000, quantity: 3 },
+    "octopus-keyring": { price: null, quantity: null },
+    "poetry-postcards": { price: null, quantity: null },
   },
 }
 
 describe("field-sale transfer guidance", () => {
   it("keeps field-sale links in the original product layout without enabling unconfigured payment", () => {
     try {
-      for (const id of ["kendama", "dango-keyring"] as const) {
+      for (const id of Object.keys(fieldProducts) as FieldProductId[]) {
         vi.stubGlobal("location", { search: `?buy=${id}` })
         const html = renderToStaticMarkup(createElement(FieldSale))
         expect(html).toContain(`>${fieldProducts[id].name}</h1>`)
@@ -45,11 +48,39 @@ describe("field-sale transfer guidance", () => {
       vi.unstubAllGlobals()
     }
   })
-  it("accepts only the two known products, without inheriting object properties", () => {
+  it("accepts only known products, without inheriting object properties", () => {
     expect(fieldProductId("kendama")).toBe("kendama")
     expect(fieldProductId("dango-keyring")).toBe("dango-keyring")
+    expect(fieldProductId("octopus-keyring")).toBe("octopus-keyring")
+    expect(fieldProductId("poetry-postcards")).toBe("poetry-postcards")
     for (const input of [null, "", "constructor", "__proto__", "other"])
       expect(fieldProductId(input)).toBeNull()
+  })
+  it("keeps existing sales active when a deployed config predates the new products", () => {
+    const legacy = {
+      ...config,
+      products: {
+        kendama: config.products.kendama,
+        "dango-keyring": config.products["dango-keyring"],
+      },
+    }
+    const result = readFieldSaleConfig(legacy)
+    expect(result.products.kendama).toEqual(config.products.kendama)
+    expect(result.products["octopus-keyring"]).toEqual({
+      price: null,
+      quantity: null,
+    })
+    expect(result.products["poetry-postcards"]).toEqual({
+      price: null,
+      quantity: null,
+    })
+    expect(
+      transferAmount(
+        result.products["octopus-keyring"].price,
+        1,
+        result.products["octopus-keyring"].quantity,
+      ),
+    ).toBeNull()
   })
   it("requires configured prices and whole available quantities", () => {
     expect(readFieldSaleConfig(config)).toEqual(config)

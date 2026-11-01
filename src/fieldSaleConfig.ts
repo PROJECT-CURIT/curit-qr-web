@@ -25,6 +25,32 @@ export const fieldProducts = {
       "가방이나 열쇠에 달아 두고, 문득 눈이 마주칠 때 한 번 웃어 주세요. 고양이는 셋이지만, 데려가는 건 키링 한 개랍니다..!!",
     ],
   },
+  "octopus-keyring": {
+    name: "양면 문어 키링",
+    image: "octopus-keyring.jpg",
+    subtitle: "오늘 기분은.. 뒤집어 보세요!",
+    category: "키링 · 라이프스타일",
+    tags: ["양면 문어", "가방 소품", "현장 수령"],
+    composition: "문어 키링 1개",
+    description: "뒤집으면 다른 표정이 나타나는 작은 문어 키링.",
+    story: [
+      "방긋 웃는 날도, 살짝 심술나는 날도 있잖아요. 오늘 기분에 맞는 얼굴로 뒤집어 가방에 달아 주세요.",
+      "작은 문어 한 마리로 전하는 오늘의 기분! 색상과 양면 조합은 매장에 놓인 실물을 보고 골라 주세요.",
+    ],
+  },
+  "poetry-postcards": {
+    name: "나태주 시 엽서",
+    image: "poetry-postcards.jpg",
+    subtitle: "하고 싶던 말, 한 장에 담아서.",
+    category: "엽서 · 문구",
+    tags: ["나태주", "시 엽서", "현장 수령"],
+    composition: "판매 단위와 구성은 매장에서 확인",
+    description: "나태주 시인의 시와 그림을 담은 엽서.",
+    story: [
+      "마음은 있는데 무슨 말을 적어야 할지 모르겠는 날. 마음에 닿는 엽서를 골라, 전하고 싶었던 한마디를 덧붙여 보세요.",
+      "누군가에게 건네도, 내 책상 곁에 두어도 좋아요. 엽서 디자인과 판매 구성은 매장에서 실물로 확인해 주세요.",
+    ],
+  },
 } as const
 
 export type FieldProductId = keyof typeof fieldProducts
@@ -65,8 +91,9 @@ export function readFieldSaleConfig(value: unknown): FieldSaleConfig {
   ) {
     throw new Error("입금 계좌를 확인하지 못했어요. 매장에 문의해 주세요.")
   }
+  const products = { ...config.products }
   for (const id of Object.keys(fieldProducts) as FieldProductId[]) {
-    const product = config.products[id]
+    const product = products[id] ?? { price: null, quantity: null }
     if (
       !product ||
       (product.price !== null &&
@@ -76,8 +103,9 @@ export function readFieldSaleConfig(value: unknown): FieldSaleConfig {
     ) {
       throw new Error("상품의 가격과 판매 수량을 확인하지 못했어요.")
     }
+    products[id] = product
   }
-  return config
+  return { ...config, products }
 }
 
 export function transferAmount(
