@@ -29,7 +29,7 @@ export const fieldProducts = {
   "dango-keyring": {
     name: "고양이 당고 키링",
     image: "dango-keyring.png",
-    subtitle: "귀여움 하나는 확실합니다!",
+    subtitle: "효과는.. 귀엽습니다..!!",
     category: "키링 · 라이프스타일",
     tags: ["당고 키링", "가방 소품", "현장 수령"],
     composition: "키링 1개",
