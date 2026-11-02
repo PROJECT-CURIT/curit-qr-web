@@ -1101,13 +1101,13 @@ export default function App() {
                   <div className="verified-contact">
                     <Icon name="check" size={17} />
                     <div>
-                      <strong>확인한 휴대폰 번호</strong>
+                      <strong>주문 안내 연락처</strong>
                       <span>
                         {verifiedPhone.slice(0, 3)}-{verifiedPhone.slice(3, -4)}
                         -{verifiedPhone.slice(-4)}
                       </span>
                     </div>
-                    <small>확인 완료</small>
+                    <small>입력 완료</small>
                   </div>
                 </section>
                 <section className="form-section payment-section">
