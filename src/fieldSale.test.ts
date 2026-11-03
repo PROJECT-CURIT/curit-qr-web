@@ -34,6 +34,7 @@ const publishedCatalog = JSON.parse(
     image: string
     price: number
     quantity: number | null
+    status: "ACTIVE" | "PAUSED" | "SOLD_OUT"
   }>
 }
 const publishedSaleConfig = JSON.parse(
@@ -46,6 +47,7 @@ const publishedSaleConfig = JSON.parse(
     price: number | null
     quantity: number | null
   }>
+  bank: unknown
 }
 
 describe("field-sale transfer guidance", () => {
@@ -60,6 +62,13 @@ describe("field-sale transfer guidance", () => {
         image: fieldProducts[id].image,
         price: publishedSaleConfig.products[id].price,
         quantity: publishedSaleConfig.products[id].quantity,
+        status:
+          publishedSaleConfig.products[id].quantity === 0
+            ? "SOLD_OUT"
+            : publishedSaleConfig.bank &&
+                publishedSaleConfig.products[id].quantity !== null
+              ? "ACTIVE"
+              : "PAUSED",
       })
     }
   })
