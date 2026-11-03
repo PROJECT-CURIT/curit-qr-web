@@ -335,7 +335,9 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:#fff}body{ma
 .interest-strip { width: calc(100% - var(--page-gutter) * 2); max-width: 1120px; margin: 8px auto 18px; min-height: 34px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: var(--soft); color: #536548; font-size: 11px; line-height: 1.45; text-align: center; }
 .interest-strip strong { color: var(--green); font-weight: 700; }
 .interest-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex: 0 0 auto; }
+.checkout > .purchase-intent-strip { width: 100%; max-width: none; margin: 8px 0 18px; }
 @media (max-width: 680px) { .interest-strip { width: calc(100% - 32px); margin: 8px 16px 14px; font-size: 10px; } }
+@media (max-width: 680px) { .checkout > .purchase-intent-strip { width: 100%; margin: 8px 0 14px; } }
 .footer-brand-logo { display: inline-block; font-size: 15px; vertical-align: middle; margin-right: 15px; }
 .guest-access .access-symbol { display: block; width: auto; height: auto; background: transparent; border-radius: 0; margin-left: 0; font-size: 20px; }
 @media (prefers-reduced-motion: reduce) {

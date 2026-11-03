@@ -362,6 +362,48 @@ export async function loadFieldProductViewCount(productId: string) {
   return Number(result.viewCount)
 }
 
+function purchaseIntentCount(
+  result: any,
+  expectedKey: "productId" | "qrToken",
+  expectedValue: string,
+) {
+  if (
+    result?.[expectedKey] !== expectedValue ||
+    !Number.isSafeInteger(result?.purchaseIntentCount) ||
+    result.purchaseIntentCount < 0
+  )
+    throw new Error("구매 관심 정보를 확인하지 못했어요.")
+  return Number(result.purchaseIntentCount)
+}
+
+export async function loadFieldProductPurchaseIntentCount(productId: string) {
+  const path = `/api/v1/field-products/${encodeURIComponent(productId)}/purchase-intent`
+  return purchaseIntentCount(
+    await commerceRequest(path),
+    "productId",
+    productId,
+  )
+}
+
+export async function recordFieldProductPurchaseIntent(productId: string) {
+  const path = `/api/v1/field-products/${encodeURIComponent(productId)}/purchase-intent`
+  return purchaseIntentCount(
+    await commerceRequest(path, {}),
+    "productId",
+    productId,
+  )
+}
+
+export async function loadQrPurchaseIntentCount(token: string) {
+  const path = `/api/v1/qr/${encodeURIComponent(token)}/purchase-intent`
+  return purchaseIntentCount(await commerceRequest(path), "qrToken", token)
+}
+
+export async function recordQrPurchaseIntent(token: string) {
+  const path = `/api/v1/qr/${encodeURIComponent(token)}/purchase-intent`
+  return purchaseIntentCount(await commerceRequest(path, {}), "qrToken", token)
+}
+
 export function checkoutDestination(value: unknown) {
   if (typeof value !== "string")
     throw new Error("결제창을 열지 못했어요. 다시 시도해 주세요.")

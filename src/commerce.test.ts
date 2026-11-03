@@ -15,11 +15,15 @@ vi.mock("@tosspayments/tosspayments-sdk", () => ({
 }))
 
 import {
+  loadFieldProductPurchaseIntentCount,
   loadFieldProductViewCount,
+  loadQrPurchaseIntentCount,
   loadQrListing,
   paymentFailureFromSearch,
   PaymentWindowCancelledError,
   requestTossPayment,
+  recordFieldProductPurchaseIntent,
+  recordQrPurchaseIntent,
 } from "./commerce"
 
 describe("payment return parsing", () => {
@@ -133,6 +137,58 @@ describe("QR visit analytics", () => {
     )
 
     await expect(loadFieldProductViewCount("poetry-postcards")).resolves.toBe(7)
+  })
+
+  it("keeps field and QR purchase-intent counters on their own endpoints", async () => {
+    const values = new Map<string, string>()
+    vi.stubGlobal("window", { location: { origin: "https://example.com" } })
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => values.get(key) || null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+    })
+    vi.stubGlobal("sessionStorage", {
+      getItem: () => null,
+      setItem: () => undefined,
+      removeItem: () => undefined,
+    })
+    const request = vi.fn(async (url: string, init?: RequestInit) => {
+      const headers = new Headers(init?.headers)
+      expect(headers.get("x-curit-visitor-id")).toMatch(
+        /^[A-Za-z0-9_-]{16,128}$/,
+      )
+      const isField = url.includes("/field-products/")
+      return new Response(
+        JSON.stringify(
+          isField
+            ? { productId: "dango-keyring", purchaseIntentCount: 3 }
+            : {
+                qrToken: "demo-dessert-plate",
+                purchaseIntentCount: 2,
+              },
+        ),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      )
+    })
+    vi.stubGlobal("fetch", request)
+
+    await expect(
+      loadFieldProductPurchaseIntentCount("dango-keyring"),
+    ).resolves.toBe(3)
+    await expect(
+      recordFieldProductPurchaseIntent("dango-keyring"),
+    ).resolves.toBe(3)
+    await expect(loadQrPurchaseIntentCount("demo-dessert-plate")).resolves.toBe(
+      2,
+    )
+    await expect(recordQrPurchaseIntent("demo-dessert-plate")).resolves.toBe(2)
+
+    expect(request.mock.calls.map((call) => call[1]?.method)).toEqual([
+      "GET",
+      "POST",
+      "GET",
+      "POST",
+    ])
   })
 })
 

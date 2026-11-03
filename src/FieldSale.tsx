@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react"
 import { Icon } from "./App"
-import { loadFieldProductViewCount } from "./commerce"
+import {
+  loadFieldProductPurchaseIntentCount,
+  loadFieldProductViewCount,
+  recordFieldProductPurchaseIntent,
+} from "./commerce"
 import {
   fieldProductId,
   fieldProducts,
@@ -37,6 +41,9 @@ export default function FieldSale() {
   const [shareMessage, setShareMessage] = useState("")
   const [showTransfer, setShowTransfer] = useState(false)
   const [viewCount, setViewCount] = useState<number | null>(null)
+  const [purchaseIntentCount, setPurchaseIntentCount] = useState<number | null>(
+    null,
+  )
   const transferHeading = useRef<HTMLHeadingElement>(null)
   const offer = id ? config?.products[id] : null
   const amount = transferAmount(
@@ -73,6 +80,20 @@ export default function FieldSale() {
       })
     return () => controller.abort()
   }, [product, attempt])
+
+  useEffect(() => {
+    if (!id) return
+    let active = true
+    setPurchaseIntentCount(null)
+    loadFieldProductPurchaseIntentCount(id)
+      .then((count) => {
+        if (active) setPurchaseIntentCount(count)
+      })
+      .catch(() => undefined)
+    return () => {
+      active = false
+    }
+  }, [id])
 
   useEffect(() => {
     if (!id) return
@@ -132,6 +153,14 @@ export default function FieldSale() {
       ?.scrollIntoView({ behavior: "smooth" })
   }
 
+  function openPurchase() {
+    if (!id || !ready) return
+    setShowTransfer(true)
+    void recordFieldProductPurchaseIntent(id)
+      .then(setPurchaseIntentCount)
+      .catch(() => undefined)
+  }
+
   return (
     <div
       className={"app field-sale app-" + (showTransfer ? "checkout" : "detail")}
@@ -176,6 +205,14 @@ export default function FieldSale() {
         </main>
       ) : showTransfer && ready ? (
         <main id="field-content" className="checkout">
+          {purchaseIntentCount !== null && (
+            <div className="interest-strip purchase-intent-strip" role="status">
+              <span className="interest-dot" aria-hidden="true" />이 소품을
+              지금까지{" "}
+              <strong>{purchaseIntentCount.toLocaleString("ko-KR")}분</strong>이
+              구매하시려고 하셨어요!
+            </div>
+          )}
           <div className="checkout-title">
             <h1
               ref={transferHeading}
@@ -622,7 +659,7 @@ export default function FieldSale() {
             <button
               className="primary"
               disabled={!ready}
-              onClick={() => setShowTransfer(true)}
+              onClick={openPurchase}
             >
               {offer?.quantity === 0
                 ? "품절"

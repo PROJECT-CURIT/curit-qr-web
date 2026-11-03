@@ -4,11 +4,13 @@ import {
   artistStories,
   checkoutDestination,
   commerceRequest,
+  loadQrPurchaseIntentCount,
   loadQrListing,
   paymentFailureFromSearch,
   pickupForArtwork,
   readPaidOrder,
   requestTossPayment,
+  recordQrPurchaseIntent,
   CommerceError,
   PaymentWindowCancelledError,
   isPresentation,
@@ -126,6 +128,9 @@ export default function App() {
     useState<"loading" | "guest" | "verified">("loading")
   const [sessionError, setSessionError] = useState("")
   const [ordersOpen, setOrdersOpen] = useState(false)
+  const [purchaseIntentCount, setPurchaseIntentCount] = useState<number | null>(
+    null,
+  )
   const [accessIntent, setAccessIntent] =
     useState<"checkout" | "orders" | null>(null)
   useEffect(() => {
@@ -253,6 +258,19 @@ export default function App() {
     }
   }, [toast])
   useEffect(() => {
+    setPurchaseIntentCount(null)
+    if (stage !== "checkout" || !qrToken) return
+    let active = true
+    loadQrPurchaseIntentCount(qrToken)
+      .then((count) => {
+        if (active) setPurchaseIntentCount(count)
+      })
+      .catch(() => undefined)
+    return () => {
+      active = false
+    }
+  }, [stage, qrToken])
+  useEffect(() => {
     if (!gallery) return
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = "hidden"
@@ -359,6 +377,17 @@ export default function App() {
         qrToken ? qrPath(qrToken) : "?artwork=" + encodeURIComponent(productId),
       )
     window.scrollTo({ top: 0, behavior: "instant" })
+  }
+  const openCheckout = () => {
+    if (qrToken)
+      void recordQrPurchaseIntent(qrToken)
+        .then(setPurchaseIntentCount)
+        .catch(() => undefined)
+    if (sessionStatus === "verified") navigate("checkout")
+    else {
+      setAccessIntent("checkout")
+      window.scrollTo(0, 0)
+    }
   }
   const selectProduct = (id: string) => {
     if (snapshot) return
@@ -1002,11 +1031,7 @@ export default function App() {
             <button
               className="primary"
               disabled={!!issue}
-              onClick={() =>
-                sessionStatus === "verified"
-                  ? navigate("checkout")
-                  : setAccessIntent("checkout")
-              }
+              onClick={openCheckout}
             >
               {issue
                 ? snapshot?.saleStatus === "preparing"
@@ -1027,6 +1052,14 @@ export default function App() {
       )}
       {!ordersOpen && stage === "checkout" && (
         <main className="checkout">
+          {purchaseIntentCount !== null && (
+            <div className="interest-strip purchase-intent-strip" role="status">
+              <span className="interest-dot" aria-hidden="true" />이 소품을
+              지금까지{" "}
+              <strong>{purchaseIntentCount.toLocaleString("ko-KR")}분</strong>이
+              구매하시려고 하셨어요!
+            </div>
+          )}
           <div className="checkout-title">
             <h1>
               마음에 닿은 작품을,
