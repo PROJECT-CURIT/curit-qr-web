@@ -37,7 +37,7 @@ jobs:
         if: ${{ vars.FIELD_SALE_CONFIG != '' }}
         env:
           FIELD_SALE_CONFIG: ${{ vars.FIELD_SALE_CONFIG }}
-        run: node -e "const fs = require('node:fs'); const path = 'dist/field-sale/config.json'; const defaults = JSON.parse(fs.readFileSync(path, 'utf8')); const settings = JSON.parse(process.env.FIELD_SALE_CONFIG); fs.writeFileSync(path, JSON.stringify({ ...defaults, ...settings, products:{ ...defaults.products, ...settings.products } }))"
+        run: node -e "const fs = require('node:fs'); const configPath = 'dist/field-sale/config.json'; const defaults = JSON.parse(fs.readFileSync(configPath, 'utf8')); const settings = JSON.parse(process.env.FIELD_SALE_CONFIG); const config = { ...defaults, ...settings, products:{ ...defaults.products, ...settings.products } }; fs.writeFileSync(configPath, JSON.stringify(config)); const catalogPath = 'dist/field-sale/catalog.json'; const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf8')); for (const [id, item] of Object.entries(catalog.products)) { const sale = config.products[id]; if (!sale || !Number.isSafeInteger(sale.price) || sale.price < 1) throw new Error('Missing published price for ' + id); item.price = sale.price; item.quantity = sale.quantity ?? null; } fs.writeFileSync(catalogPath, JSON.stringify(catalog, null, 2) + '\n');"
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist

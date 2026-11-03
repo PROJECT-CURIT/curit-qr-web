@@ -1,5 +1,6 @@
 import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
+import { readFileSync } from "node:fs"
 import { describe, expect, it, vi } from "vitest"
 import FieldSale from "./FieldSale"
 import {
@@ -21,7 +22,48 @@ const config = {
   },
 }
 
+const publishedCatalog = JSON.parse(
+  readFileSync(
+    new URL("../public/field-sale/catalog.json", import.meta.url),
+    "utf8",
+  ),
+) as {
+  version: number
+  products: Record<string, {
+    name: string
+    image: string
+    price: number
+    quantity: number | null
+  }>
+}
+const publishedSaleConfig = JSON.parse(
+  readFileSync(
+    new URL("../public/field-sale/config.json", import.meta.url),
+    "utf8",
+  ),
+) as {
+  products: Record<string, {
+    price: number | null
+    quantity: number | null
+  }>
+}
+
 describe("field-sale transfer guidance", () => {
+  it("keeps the app-facing catalog aligned with every live product page and current sale settings", () => {
+    expect(publishedCatalog.version).toBe(1)
+    expect(Object.keys(publishedCatalog.products).sort()).toEqual(
+      Object.keys(fieldProducts).sort(),
+    )
+    for (const id of Object.keys(fieldProducts) as FieldProductId[]) {
+      expect(publishedCatalog.products[id]).toMatchObject({
+        name: fieldProducts[id].name,
+        image: fieldProducts[id].image,
+        price: publishedSaleConfig.products[id].price,
+        quantity: publishedSaleConfig.products[id].quantity,
+      })
+    }
+  })
+
   it("keeps field-sale links in the original product layout without enabling unconfigured payment", () => {
     try {
       for (const id of Object.keys(fieldProducts) as FieldProductId[]) {
