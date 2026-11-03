@@ -6,7 +6,7 @@
     "dango-keyring": { "price": 5000, "quantity": null },
     "octopus-keyring": { "price": 2000, "quantity": 8 },
     "poetry-postcards": { "price": 1000, "quantity": 6 },
-    "jjukkumi-keyring": { "price": null, "quantity": null },
-    "tea-coaster": { "price": null, "quantity": null }
+    "jjukkumi-keyring": { "price": 2000, "quantity": null },
+    "tea-coaster": { "price": 3000, "quantity": null }
   }
 }

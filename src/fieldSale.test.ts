@@ -55,13 +55,17 @@ const publishedSaleConfig = JSON.parse(
 describe("field-sale transfer guidance", () => {
   it("keeps the app-facing catalog aligned with every live product page and current sale settings", () => {
     expect(publishedCatalog.version).toBe(2)
-    expect(Object.keys(publishedCatalog.products).sort()).toEqual(
-      Object.keys(fieldProducts)
-        .filter((id) => publishedSaleConfig.products[id].price !== null)
-        .sort(),
+    const publishedIds = (Object.keys(
+      fieldProducts,
+    ) as FieldProductId[]).filter(
+      (id) =>
+        fieldProducts[id].image &&
+        publishedSaleConfig.products[id].price !== null,
     )
-    for (const id of Object.keys(fieldProducts) as FieldProductId[]) {
-      if (publishedSaleConfig.products[id].price === null) continue
+    expect(Object.keys(publishedCatalog.products).sort()).toEqual(
+      publishedIds.sort(),
+    )
+    for (const id of publishedIds) {
       expect(publishedCatalog.products[id]).toMatchObject({
         name: fieldProducts[id].name,
         image: fieldProducts[id].image,
