@@ -52,7 +52,7 @@ const publishedSaleConfig = JSON.parse(
 
 describe("field-sale transfer guidance", () => {
   it("keeps the app-facing catalog aligned with every live product page and current sale settings", () => {
-    expect(publishedCatalog.version).toBe(1)
+    expect(publishedCatalog.version).toBe(2)
     expect(Object.keys(publishedCatalog.products).sort()).toEqual(
       Object.keys(fieldProducts).sort(),
     )
