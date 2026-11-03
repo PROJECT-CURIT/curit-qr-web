@@ -1,6 +1,7 @@
 export type QrSnapshot = {
   v: 1
   qrToken?: string
+  viewCount?: number
   storeId: string
   requestId: string
   returnUrl: string
@@ -81,6 +82,12 @@ export function validateSnapshot(value: unknown): QrSnapshot {
       !/^[A-Za-z0-9_-]{12,128}$/.test(snapshot.qrToken))
   )
     throw new Error("QR 식별 정보를 확인할 수 없어요.")
+  if (
+    snapshot.viewCount !== undefined &&
+    (!Number.isSafeInteger(snapshot.viewCount) ||
+      Number(snapshot.viewCount) < 0)
+  )
+    throw new Error("상품 조회 정보를 확인할 수 없어요.")
   returnDestination(String(snapshot.returnUrl))
   const store = record(snapshot.store)
   strings(store, ["name", "phone", "address", "hours"])

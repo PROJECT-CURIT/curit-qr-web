@@ -640,6 +640,14 @@ export default function App() {
       )}
       {!ordersOpen && stage === "detail" && (
         <main>
+          {snapshot && Number.isSafeInteger(snapshot.viewCount) && (
+            <div className="interest-strip" role="status">
+              <span className="interest-dot" aria-hidden="true" />이 소품을
+              지금까지{" "}
+              <strong>{snapshot.viewCount!.toLocaleString("ko-KR")}분</strong>이
+              관심 있게 살펴보셨어요!
+            </div>
+          )}
           <div className="detail-grid">
             <div className="visual">
               {product.img && (
