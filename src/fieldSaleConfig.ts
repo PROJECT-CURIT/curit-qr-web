@@ -87,6 +87,37 @@ export const fieldProducts = {
     buyingNote:
       "문어 키링 1개 기준이에요. 색상 선택 없이 현장 상품으로 제공하니, 이체 전에 실제 색상과 양면 표정을 확인해 주세요.",
   },
+  "jjukkumi-keyring": {
+    name: "쭈꾸미 키링",
+    image: null,
+    subtitle: "가방에 쏙, 쭈꾸미 한 마리",
+    category: "키링 · 라이프스타일",
+    tags: ["쭈꾸미 키링", "가방 소품", "현장 수령"],
+    composition: "키링 1개",
+    description: "쭈꾸미를 모티프로 한 키링이에요.",
+    story: [
+      "자주 드는 가방이나 열쇠에 달아 보세요. 매일 들고 다니는 물건에 작은 포인트가 돼요.",
+    ],
+    photoCaption: "쭈꾸미 키링",
+    details: [],
+    buyingNote: "키링 1개 기준이에요. 상품은 매장에서 실물로 확인해 주세요.",
+  },
+  "tea-coaster": {
+    name: "티코스터",
+    image: null,
+    subtitle: "좋아하는 잔 아래, 작은 자리",
+    category: "테이블 소품 · 라이프스타일",
+    tags: ["티코스터", "컵받침", "현장 수령"],
+    composition: "티코스터 1개",
+    description: "차나 커피를 마실 때 잔 아래에 놓는 컵받침이에요.",
+    story: [
+      "책상이나 식탁 위에 두고 즐겨 쓰는 잔과 함께 써 보세요. 작은 소품 하나로 차를 마시는 자리가 달라져요.",
+    ],
+    photoCaption: "티코스터",
+    details: [],
+    buyingNote:
+      "티코스터 1개 기준이에요. 상품은 매장에서 실물로 확인해 주세요.",
+  },
   "poetry-postcards": {
     name: "나태주 시 엽서",
     image: "poetry-postcards-photo.jpg",

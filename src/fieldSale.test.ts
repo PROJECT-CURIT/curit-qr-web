@@ -19,6 +19,8 @@ const config = {
     "dango-keyring": { price: 2000, quantity: 3 },
     "octopus-keyring": { price: null, quantity: null },
     "poetry-postcards": { price: null, quantity: null },
+    "jjukkumi-keyring": { price: null, quantity: null },
+    "tea-coaster": { price: null, quantity: null },
   },
 }
 
@@ -54,9 +56,12 @@ describe("field-sale transfer guidance", () => {
   it("keeps the app-facing catalog aligned with every live product page and current sale settings", () => {
     expect(publishedCatalog.version).toBe(2)
     expect(Object.keys(publishedCatalog.products).sort()).toEqual(
-      Object.keys(fieldProducts).sort(),
+      Object.keys(fieldProducts)
+        .filter((id) => publishedSaleConfig.products[id].price !== null)
+        .sort(),
     )
     for (const id of Object.keys(fieldProducts) as FieldProductId[]) {
+      if (publishedSaleConfig.products[id].price === null) continue
       expect(publishedCatalog.products[id]).toMatchObject({
         name: fieldProducts[id].name,
         image: fieldProducts[id].image,
@@ -82,6 +87,9 @@ describe("field-sale transfer guidance", () => {
         expect(html).toContain('class="detail-grid"')
         expect(html).toContain('class="hero-copy"')
         expect(html).toContain('class="purchase-bar"')
+        expect(html.includes("상품 사진 준비 중")).toBe(
+          !fieldProducts[id].image,
+        )
         expect(html).toMatch(
           /<button(?=[^>]*class="primary")(?=[^>]*disabled="")[^>]*>/,
         )
@@ -108,6 +116,8 @@ describe("field-sale transfer guidance", () => {
     expect(fieldProductId("dango-keyring")).toBe("dango-keyring")
     expect(fieldProductId("octopus-keyring")).toBe("octopus-keyring")
     expect(fieldProductId("poetry-postcards")).toBe("poetry-postcards")
+    expect(fieldProductId("jjukkumi-keyring")).toBe("jjukkumi-keyring")
+    expect(fieldProductId("tea-coaster")).toBe("tea-coaster")
     for (const input of [null, "", "constructor", "__proto__", "other"])
       expect(fieldProductId(input)).toBeNull()
   })

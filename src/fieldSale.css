@@ -2,6 +2,8 @@
 .field-skip { position: absolute; top: -80px; left: 16px; padding: 12px; background: #fff; z-index: 30; }
 .field-skip:focus { top: 8px; }
 .field-sale .hero-image { object-fit: contain; background: #fff; }
+.field-sale .field-photo-placeholder { display: grid; place-items: center; background: var(--soft); color: var(--green); }
+.field-photo-placeholder span { display: grid; justify-items: center; gap: 8px; padding-bottom: 32px; font-size: 13px; }
 .field-sale .field-related { text-decoration: none; color: inherit; box-sizing: border-box; }
 .field-sale .related-item img { object-fit: contain; background: #f7f7f7; }
 .field-sale .field-account { user-select: all; overflow-wrap: anywhere; }

@@ -234,7 +234,9 @@ export default function FieldSale() {
                   <span>구매 상품</span>
                 </h2>
                 <div className="order-product">
-                  <img src={asset(product.image)} alt={product.name} />
+                  {product.image && (
+                    <img src={asset(product.image)} alt={product.name} />
+                  )}
                   <div>
                     <small>현장 수령</small>
                     <strong>{product.name}</strong>
@@ -323,11 +325,20 @@ export default function FieldSale() {
           )}
           <div className="detail-grid">
             <div className="visual">
-              <img
-                className="hero-image"
-                src={asset(product.image)}
-                alt={product.name}
-              />
+              {product.image ? (
+                <img
+                  className="hero-image"
+                  src={asset(product.image)}
+                  alt={product.name}
+                />
+              ) : (
+                <div className="hero-image field-photo-placeholder">
+                  <span>
+                    <Icon name="box" size={26} />
+                    상품 사진 준비 중
+                  </span>
+                </div>
+              )}
               <div className="hero-copy">
                 <span className="hero-badge">{saleStatus}</span>
                 <h1>{product.name}</h1>
@@ -442,47 +453,49 @@ export default function FieldSale() {
                       {paragraph}
                     </p>
                   ))}
-                  <figure className="field-story-photo">
-                    <img
-                      src={asset(
-                        id === "poetry-postcards"
-                          ? "na-tae-joo.jpg"
-                          : product.image,
-                      )}
-                      alt={
-                        id === "poetry-postcards"
-                          ? "강연 중인 나태주 시인"
-                          : `${product.name} 상품 참고 사진`
-                      }
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <figcaption>
-                      {product.photoCaption}
-                      {id === "poetry-postcards" && (
-                        <>
-                          <br />
-                          사진: 오후의 책방 Afternoon Bookstore ·{" "}
-                          <a
-                            href="https://commons.wikimedia.org/wiki/File:%EB%82%98%ED%83%9C%EC%A3%BC_%EC%8B%9C%EC%9D%B8.jpg"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Wikimedia Commons
-                          </a>{" "}
-                          ·{" "}
-                          <a
-                            href="https://creativecommons.org/licenses/by/3.0/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            CC BY 3.0
-                          </a>{" "}
-                          · 원본 사용
-                        </>
-                      )}
-                    </figcaption>
-                  </figure>
+                  {product.image && (
+                    <figure className="field-story-photo">
+                      <img
+                        src={asset(
+                          id === "poetry-postcards"
+                            ? "na-tae-joo.jpg"
+                            : product.image,
+                        )}
+                        alt={
+                          id === "poetry-postcards"
+                            ? "강연 중인 나태주 시인"
+                            : `${product.name} 상품 참고 사진`
+                        }
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <figcaption>
+                        {product.photoCaption}
+                        {id === "poetry-postcards" && (
+                          <>
+                            <br />
+                            사진: 오후의 책방 Afternoon Bookstore ·{" "}
+                            <a
+                              href="https://commons.wikimedia.org/wiki/File:%EB%82%98%ED%83%9C%EC%A3%BC_%EC%8B%9C%EC%9D%B8.jpg"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Wikimedia Commons
+                            </a>{" "}
+                            ·{" "}
+                            <a
+                              href="https://creativecommons.org/licenses/by/3.0/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              CC BY 3.0
+                            </a>{" "}
+                            · 원본 사용
+                          </>
+                        )}
+                      </figcaption>
+                    </figure>
+                  )}
                   {product.details.map((detail) => (
                     <section className="field-story-detail" key={detail.title}>
                       <h3>{detail.title}</h3>
@@ -602,18 +615,20 @@ export default function FieldSale() {
                 <h3>큐릿에서 전시 중인 상품</h3>
               </div>
               {Object.entries(fieldProducts)
-                .filter(([otherId]) => otherId !== id)
+                .filter(([otherId, item]) => otherId !== id && item.image)
                 .map(([otherId, item]) => (
                   <a
                     key={otherId}
                     className="related-item field-related"
                     href={"?buy=" + otherId}
                   >
-                    <img
-                      src={asset(item.image)}
-                      alt={item.name}
-                      loading="lazy"
-                    />
+                    {item.image && (
+                      <img
+                        src={asset(item.image)}
+                        alt={item.name}
+                        loading="lazy"
+                      />
+                    )}
                     <span>
                       <small>현장 수령</small>
                       <strong>{item.name}</strong>
