@@ -293,7 +293,8 @@ export async function commerceRequest(
             ? { Authorization: `Bearer ${sessionToken}` }
             : {}),
         ...(sessionToken ? { "x-curit-session": sessionToken } : {}),
-        ...(path.startsWith("/api/v1/qr/")
+        ...(path.startsWith("/api/v1/qr/") ||
+        path.startsWith("/api/v1/field-products/")
           ? { "x-curit-visitor-id": qrVisitorId() }
           : {}),
       },
@@ -331,10 +332,34 @@ export async function commerceRequest(
 }
 
 export async function loadQrListing(token: string) {
-  const result = await commerceRequest(
-    "/api/v1/qr/" + encodeURIComponent(token),
-  )
+  let result: unknown
+  try {
+    result = await commerceRequest("/api/v1/qr/" + encodeURIComponent(token))
+  } catch (error) {
+    if (error instanceof CommerceError) throw error
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    result = await commerceRequest("/api/v1/qr/" + encodeURIComponent(token))
+  }
   return validateSnapshot(result)
+}
+
+export async function loadFieldProductViewCount(productId: string) {
+  const path = `/api/v1/field-products/${encodeURIComponent(productId)}/view`
+  let result: any
+  try {
+    result = await commerceRequest(path)
+  } catch (error) {
+    if (error instanceof CommerceError) throw error
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    result = await commerceRequest(path)
+  }
+  if (
+    result?.productId !== productId ||
+    !Number.isSafeInteger(result?.viewCount) ||
+    result.viewCount < 0
+  )
+    throw new Error("상품 조회 정보를 확인하지 못했어요.")
+  return Number(result.viewCount)
 }
 
 export function checkoutDestination(value: unknown) {

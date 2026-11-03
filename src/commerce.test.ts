@@ -15,6 +15,7 @@ vi.mock("@tosspayments/tosspayments-sdk", () => ({
 }))
 
 import {
+  loadFieldProductViewCount,
   loadQrListing,
   paymentFailureFromSearch,
   PaymentWindowCancelledError,
@@ -102,6 +103,36 @@ describe("QR visit analytics", () => {
     expect(firstId).toBeTruthy()
     expect(values.get("curit.qr.visitor-id.v1")).toBe(firstId)
     expect(request).toHaveBeenCalledTimes(2)
+  })
+
+  it("records and reads a separate field-sale item count", async () => {
+    const values = new Map<string, string>()
+    vi.stubGlobal("window", { location: { origin: "https://example.com" } })
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => values.get(key) || null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+    })
+    vi.stubGlobal("sessionStorage", {
+      getItem: () => null,
+      setItem: () => undefined,
+      removeItem: () => undefined,
+    })
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        expect(url).toContain("/api/v1/field-products/poetry-postcards/view")
+        expect(new Headers(init?.headers).get("x-curit-visitor-id")).toMatch(
+          /^[A-Za-z0-9_-]{16,128}$/,
+        )
+        return new Response(
+          JSON.stringify({ productId: "poetry-postcards", viewCount: 7 }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        )
+      }),
+    )
+
+    await expect(loadFieldProductViewCount("poetry-postcards")).resolves.toBe(7)
   })
 })
 

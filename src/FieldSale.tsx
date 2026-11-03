@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { Icon } from "./App"
+import { loadFieldProductViewCount } from "./commerce"
 import {
   fieldProductId,
   fieldProducts,
@@ -35,6 +36,7 @@ export default function FieldSale() {
   const [copyMessage, setCopyMessage] = useState("")
   const [shareMessage, setShareMessage] = useState("")
   const [showTransfer, setShowTransfer] = useState(false)
+  const [viewCount, setViewCount] = useState<number | null>(null)
   const transferHeading = useRef<HTMLHeadingElement>(null)
   const offer = id ? config?.products[id] : null
   const amount = transferAmount(
@@ -71,6 +73,19 @@ export default function FieldSale() {
       })
     return () => controller.abort()
   }, [product, attempt])
+
+  useEffect(() => {
+    if (!id) return
+    let active = true
+    loadFieldProductViewCount(id)
+      .then((count) => {
+        if (active) setViewCount(count)
+      })
+      .catch(() => undefined)
+    return () => {
+      active = false
+    }
+  }, [id])
 
   useEffect(() => {
     if (showTransfer) {
@@ -262,6 +277,13 @@ export default function FieldSale() {
         </main>
       ) : (
         <main id="field-content">
+          {viewCount !== null && (
+            <div className="interest-strip" role="status">
+              <span className="interest-dot" aria-hidden="true" />이 소품을
+              지금까지 <strong>{viewCount.toLocaleString("ko-KR")}분</strong>이
+              관심 있게 살펴보셨어요!
+            </div>
+          )}
           <div className="detail-grid">
             <div className="visual">
               <img
