@@ -385,6 +385,12 @@ export default function App() {
     snapshot,
   ])
   const navigate = (next: typeof stage) => {
+    const orderQr =
+      stage === "complete" ? confirmedOrder?.snapshot?.qrToken : undefined
+    if (next === "detail" && orderQr && orderQr !== qrToken) {
+      window.location.assign(qrPath(orderQr))
+      return
+    }
     setStage(next)
     setOrdersOpen(false)
     setAgreed(false)
@@ -682,6 +688,7 @@ export default function App() {
               showToast("작품 정보를 찾지 못했어요. 매장에 문의해 주세요.")
               return
             }
+            confirmationStarted.current = true
             setConfirmedOrder(order)
             setSnapshot(order.snapshot || null)
             setProductId(order.artworkId)
@@ -691,12 +698,7 @@ export default function App() {
             window.history.replaceState(
               {},
               "",
-              (qrToken
-                ? qrPath(qrToken)
-                : "?artwork=" + encodeURIComponent(order.artworkId)) +
-                (qrToken ? "?" : "&") +
-                "order=" +
-                encodeURIComponent(order.id),
+              `${import.meta.env.BASE_URL}?order=${encodeURIComponent(order.id)}`,
             )
             window.scrollTo(0, 0)
           }}
