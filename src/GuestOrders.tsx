@@ -52,7 +52,7 @@ export default function GuestOrders({ phone, onOpen, onExpired }: Props) {
       <div className="orders-heading">
         <span className="section-kicker">MY ORDERS</span>
         <h1>나의 작품 주문</h1>
-        <p>{masked} 번호로 주문한 작품을 확인해 보세요.</p>
+        <p>이 브라우저에서 주문한 작품을 확인하세요. 연락처 {masked}</p>
       </div>
       {loading ? (
         <div className="session-loading" role="status">

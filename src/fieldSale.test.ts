@@ -45,7 +45,9 @@ it("queues visits and checkout entries for every field-sale product without extr
     expect(dataLayer.slice(2).map((entry) => Array.from(entry))).toEqual(
       productIds.flatMap((id) =>
         ["field_product_view", "field_checkout_open"].map((event) => [
-          "event", event, {
+          "event",
+          event,
+          {
             send_to: measurementId,
             product_id: id,
             page_location: `https://example.com/curit/?buy=${id}`,

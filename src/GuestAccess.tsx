@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { commerceRequest, isPresentation } from "./commerce"
 
 type Props = {
@@ -18,7 +18,16 @@ export default function GuestAccess({
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
+  const dialogRef = useRef<HTMLElement>(null)
   const phoneValid = /^01[016789]\d{7,8}$/.test(phone)
+  useEffect(() => {
+    if (!open) return
+    const trigger = document.activeElement
+    dialogRef.current?.focus()
+    return () => {
+      if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus()
+    }
+  }, [open])
   useEffect(() => {
     if (!open) return
     const previous = document.body.style.overflow
@@ -85,7 +94,7 @@ export default function GuestAccess({
           </span>
         </span>
       </header>
-      <main className="guest-access">
+      <main className="guest-access" inert={open}>
         <div className="access-symbol">큐릿</div>
         <h1>
           마음에 닿은 작품을,
@@ -143,8 +152,9 @@ export default function GuestAccess({
             <details className="access-policy">
               <summary>이용 안내</summary>
               <p>
-                휴대폰 번호는 주문 안내와 주문 내역 확인에 사용됩니다. 연락처
-                정보는 유지 기간까지, 거래 기록은 관련 법령에 따라 보관됩니다.
+                휴대폰 번호는 주문 안내에 사용합니다. 주문 내역은 주문한
+                브라우저에서 확인할 수 있으며, 브라우저 데이터를 지우면 다시
+                조회하려면 매장에 문의해야 합니다.
               </p>
             </details>
             <label className="access-check remember-check">
@@ -153,7 +163,7 @@ export default function GuestAccess({
                 checked={remember}
                 onChange={(event) => setRemember(event.target.checked)}
               />
-              <span>이 기기에서 연락처 유지</span>
+              <span>이 브라우저에서 30일간 주문 내역 확인</span>
             </label>
             <button
               className="primary"
@@ -175,6 +185,8 @@ export default function GuestAccess({
         >
           <section
             className="modal identity-modal"
+            ref={dialogRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-labelledby="identity-title"
