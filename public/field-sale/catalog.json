@@ -28,6 +28,20 @@
       "price": 1000,
       "quantity": 6,
       "status": "PAUSED"
+    },
+    "jjukkumi-keyring": {
+      "name": "쭈꾸미 키링",
+      "image": "jjukkumi-keyring-photo.jpg",
+      "price": 2000,
+      "quantity": null,
+      "status": "PAUSED"
+    },
+    "tea-coaster": {
+      "name": "티코스터",
+      "image": "tea-coaster-photo.jpg",
+      "price": 3000,
+      "quantity": null,
+      "status": "PAUSED"
     }
   }
 }

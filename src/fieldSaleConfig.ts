@@ -89,7 +89,7 @@ export const fieldProducts = {
   },
   "jjukkumi-keyring": {
     name: "쭈꾸미 키링",
-    image: null,
+    image: "jjukkumi-keyring-photo.jpg",
     subtitle: "귀엽죠? 쭈꾸미랍니다.",
     category: "키링 · 라이프스타일",
     tags: ["쭈꾸미 키링", "가방 소품", "현장 수령"],
@@ -105,7 +105,7 @@ export const fieldProducts = {
   },
   "tea-coaster": {
     name: "티코스터",
-    image: null,
+    image: "tea-coaster-photo.jpg",
     subtitle: "컵 아래 물방울엔, 티코스터!",
     category: "테이블 소품 · 라이프스타일",
     tags: ["티코스터", "컵받침", "현장 수령"],
