@@ -368,3 +368,20 @@ dialog.modal {
 }
 
 dialog.modal::backdrop { background: #0008; }
+
+html[data-keyboard-open] {
+  scroll-padding-block: 12px calc(12px + var(--keyboard-inset));
+}
+
+[data-keyboard-open] .app:is(.app-access, .app-checkout) {
+  padding-bottom: calc(28px + max(var(--keyboard-inset), env(safe-area-inset-bottom, 0px)));
+}
+
+[data-keyboard-open] .app:is(.app-access, .app-checkout) .header {
+  position: relative;
+}
+
+[data-keyboard-open] dialog.modal {
+  inset-block: var(--keyboard-top) var(--keyboard-inset);
+  max-height: calc(var(--keyboard-height) - 24px);
+}
