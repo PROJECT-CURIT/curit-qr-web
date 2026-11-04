@@ -31,6 +31,7 @@ jobs:
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_GA_MEASUREMENT_ID: ${{ vars.VITE_GA_MEASUREMENT_ID }}
           VITE_PRESENTATION_MODE: "false"
           VITE_BASE_PATH: /curit-qr-web
       - name: Apply field-sale settings

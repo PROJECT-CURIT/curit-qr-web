@@ -5,6 +5,7 @@ import {
   loadFieldProductViewCount,
   recordFieldProductPurchaseIntent,
 } from "./commerce"
+import { trackFieldSale } from "./fieldAnalytics"
 import {
   fieldProductId,
   fieldProducts,
@@ -45,6 +46,8 @@ export default function FieldSale() {
     null,
   )
   const transferHeading = useRef<HTMLHeadingElement>(null)
+  const trackedVisit = useRef<typeof id>(null)
+  const trackedCheckout = useRef<typeof id>(null)
   const offer = id ? config?.products[id] : null
   const amount = transferAmount(
     offer?.price ?? null,
@@ -97,6 +100,10 @@ export default function FieldSale() {
 
   useEffect(() => {
     if (!id) return
+    if (trackedVisit.current !== id) {
+      trackFieldSale("field_product_view", id)
+      trackedVisit.current = id
+    }
     let active = true
     loadFieldProductViewCount(id)
       .then((count) => {
@@ -156,6 +163,10 @@ export default function FieldSale() {
   function openPurchase() {
     if (!id || !ready) return
     setShowTransfer(true)
+    if (trackedCheckout.current !== id) {
+      trackFieldSale("field_checkout_open", id)
+      trackedCheckout.current = id
+    }
     void recordFieldProductPurchaseIntent(id)
       .then(setPurchaseIntentCount)
       .catch(() => undefined)

@@ -24,6 +24,42 @@ const config = {
   },
 }
 
+it("queues visits and checkout entries for every field-sale product without extra URL parameters", async () => {
+  const measurementId = "G-CURITTEST"
+  const dataLayer: ArrayLike<unknown>[] = []
+  const append = vi.fn()
+  vi.resetModules()
+  vi.stubEnv("VITE_GA_MEASUREMENT_ID", measurementId)
+  vi.stubGlobal("window", { dataLayer })
+  vi.stubGlobal("document", { createElement: () => ({}), head: { append } })
+  vi.stubGlobal("location", new URL("https://example.com/curit/?private=omit"))
+
+  try {
+    const { trackFieldSale } = await import("./fieldAnalytics")
+    const productIds = Object.keys(fieldProducts) as FieldProductId[]
+    for (const id of productIds) {
+      trackFieldSale("field_product_view", id)
+      trackFieldSale("field_checkout_open", id)
+    }
+    expect(append).toHaveBeenCalledOnce()
+    expect(dataLayer.slice(2).map((entry) => Array.from(entry))).toEqual(
+      productIds.flatMap((id) =>
+        ["field_product_view", "field_checkout_open"].map((event) => [
+          "event", event, {
+            send_to: measurementId,
+            product_id: id,
+            page_location: `https://example.com/curit/?buy=${id}`,
+          },
+        ]),
+      ),
+    )
+  } finally {
+    vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  }
+})
+
 const publishedCatalog = JSON.parse(
   readFileSync(
     new URL("../public/field-sale/catalog.json", import.meta.url),
