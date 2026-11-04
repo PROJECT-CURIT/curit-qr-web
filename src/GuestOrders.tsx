@@ -2,18 +2,18 @@ import { useEffect, useState } from "react"
 import {
   CommerceError,
   commerceRequest,
-  readPaidOrder,
-  type PaidOrder,
+  readOrderReceipt,
+  type OrderReceipt,
 } from "./commerce"
 import { projects } from "./catalog"
 
 type Props = {
   phone: string
-  onOpen: (order: PaidOrder) => void
+  onOpen: (order: OrderReceipt) => void
   onExpired: () => void
 }
 export default function GuestOrders({ phone, onOpen, onExpired }: Props) {
-  const [orders, setOrders] = useState<PaidOrder[]>([])
+  const [orders, setOrders] = useState<OrderReceipt[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [attempt, setAttempt] = useState(0)
@@ -21,11 +21,11 @@ export default function GuestOrders({ phone, onOpen, onExpired }: Props) {
     let active = true
     setLoading(true)
     setError("")
-    commerceRequest("/api/orders")
+    commerceRequest("/api/orders?includeCancelled=1")
       .then((result) => {
         if (!Array.isArray(result?.orders))
           throw new Error("주문 내역을 확인하지 못했어요. 다시 시도해 주세요.")
-        const parsed = result.orders.map(readPaidOrder)
+        const parsed = result.orders.map(readOrderReceipt)
         if (active) setOrders(parsed)
       })
       .catch((failure) => {
@@ -100,9 +100,11 @@ export default function GuestOrders({ phone, onOpen, onExpired }: Props) {
               >
                 <div className="order-card-top">
                   <span>
-                    {order.simulated || order.testPayment
-                      ? "주문 완료"
-                      : "결제 완료"}
+                    {order.status === "cancelled"
+                      ? "결제 취소"
+                      : order.simulated || order.testPayment
+                        ? "주문 완료"
+                        : "결제 완료"}
                   </span>
                   <small>{order.id}</small>
                 </div>
@@ -118,14 +120,18 @@ export default function GuestOrders({ phone, onOpen, onExpired }: Props) {
                       {order.amount.toLocaleString("ko-KR")}원
                     </p>
                     <small>
-                      {order.pickupMode === "exhibition"
-                        ? "전시 종료 후 현장 수령"
-                        : "카페 방문 수령"}
+                      {order.status === "cancelled"
+                        ? "수령이 취소됐어요"
+                        : order.pickupMode === "exhibition"
+                          ? "전시 종료 후 현장 수령"
+                          : "카페 방문 수령"}
                     </small>
                   </div>
                 </div>
                 <span className="order-card-action">
-                  주문 내역 · 수령 안내 보기 →
+                  {order.status === "cancelled"
+                    ? "취소 내역 보기 →"
+                    : "주문 내역 · 수령 안내 보기 →"}
                 </span>
               </button>
             )

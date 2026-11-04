@@ -8,13 +8,13 @@ import {
   loadQrListing,
   paymentFailureFromSearch,
   pickupForArtwork,
-  readPaidOrder,
+  readOrderReceipt,
   requestTossPayment,
   recordQrPurchaseIntent,
   CommerceError,
   PaymentWindowCancelledError,
   isPresentation,
-  type PaidOrder,
+  type OrderReceipt,
 } from "./commerce"
 import GuestAccess from "./GuestAccess"
 import GuestOrders from "./GuestOrders"
@@ -117,7 +117,9 @@ export default function App() {
   )
   const [toast, setToast] = useState<{ message: string } | null>(null)
   const showToast = (message: string) => setToast({ message })
-  const [confirmedOrder, setConfirmedOrder] = useState<PaidOrder | null>(null)
+  const [confirmedOrder, setConfirmedOrder] = useState<OrderReceipt | null>(
+    null,
+  )
   const [phone, setPhone] = useState("")
   const [verifiedPhone, setVerifiedPhone] = useState("")
   const [paymentError, setPaymentError] = useState("")
@@ -328,10 +330,12 @@ export default function App() {
             orderId: order,
             amount,
           })
-        : commerceRequest("/api/orders/" + encodeURIComponent(order))
+        : commerceRequest(
+            "/api/orders/" + encodeURIComponent(order) + "?includeCancelled=1",
+          )
     confirmation
       .then((result) => {
-        const confirmed = readPaidOrder(result)
+        const confirmed = readOrderReceipt(result)
         if (
           snapshot &&
           (!confirmed.snapshot ||
@@ -540,6 +544,7 @@ export default function App() {
     !snapshot.product.description
       ? "상품 정보"
       : tab
+  const cancelled = confirmedOrder?.status === "cancelled"
   const pickupText = isExhibition
     ? "전시 종료 후 현장 수령"
     : "결제 후 현장 수령"
@@ -1329,17 +1334,30 @@ export default function App() {
       {!ordersOpen && stage === "complete" && confirmedOrder && (
         <main className="complete">
           <div className="success-icon">
-            <Icon name="check" size={36} />
+            <Icon name={cancelled ? "close" : "check"} size={36} />
           </div>
-          <h1>
-            카페에서 만난 예술,
-            <br />
-            이제 당신의 일상으로.
-          </h1>
-          <p>
-            {product.project.artist} 작가의{" "}
-            {isExhibition ? "작품 구매 예약이" : "작품 주문이"} 완료되었습니다.
-          </p>
+          {cancelled ? (
+            <>
+              <h1>결제가 취소됐어요.</h1>
+              <p>
+                이 주문의 수령도 취소됐어요. 취소에 대해 궁금한 점이 있으면
+                매장에 문의해 주세요.
+              </p>
+            </>
+          ) : (
+            <>
+              <h1>
+                카페에서 만난 예술,
+                <br />
+                이제 당신의 일상으로.
+              </h1>
+              <p>
+                {product.project.artist} 작가의{" "}
+                {isExhibition ? "작품 구매 예약이" : "작품 주문이"}{" "}
+                완료되었습니다.
+              </p>
+            </>
+          )}
           {(confirmedOrder.simulated || confirmedOrder.testPayment) && (
             <p>이 주문은 실제 금액이 청구되지 않았어요.</p>
           )}
@@ -1357,14 +1375,14 @@ export default function App() {
             </div>
             <dl>
               <div>
-                <dt>수령 방법</dt>
-                <dd>{pickupText}</dd>
+                <dt>{cancelled ? "주문 상태" : "수령 방법"}</dt>
+                <dd>{cancelled ? "수령 취소" : pickupText}</dd>
               </div>
               <div>
-                <dt>수령 장소</dt>
+                <dt>{cancelled ? "매장" : "수령 장소"}</dt>
                 <dd>{pickup.cafe}</dd>
               </div>
-              {isExhibition && (
+              {!cancelled && isExhibition && (
                 <div>
                   <dt>전시 종료일</dt>
                   <dd>{pickup.exhibitionEnd || "매장 문의"}</dd>
@@ -1375,24 +1393,26 @@ export default function App() {
                 <dd>{confirmedOrder.paymentMethod}</dd>
               </div>
               <div className="total">
-                <dt>주문 금액</dt>
+                <dt>{cancelled ? "취소된 주문 금액" : "주문 금액"}</dt>
                 <dd>{money(confirmedOrder.amount)}</dd>
               </div>
             </dl>
           </div>
-          <div className="completion-pickup">
-            <Icon name="box" />
-            <p>
-              {isExhibition
-                ? (pickup.exhibitionEnd
-                    ? pickup.exhibitionEnd + " 이후 "
-                    : "전시가 종료된 후 ") +
-                  pickup.cafe +
-                  "에 방문해 결제 내역을 보여 주시면 작품을 전달해 드립니다."
-                : pickup.cafe +
-                  "에 방문해 결제 내역을 보여 주시면 작품을 현장에서 전달해 드립니다."}
-            </p>
-          </div>
+          {!cancelled && (
+            <div className="completion-pickup">
+              <Icon name="box" />
+              <p>
+                {isExhibition
+                  ? (pickup.exhibitionEnd
+                      ? pickup.exhibitionEnd + " 이후 "
+                      : "전시가 종료된 후 ") +
+                    pickup.cafe +
+                    "에 방문해 결제 내역을 보여 주시면 작품을 전달해 드립니다."
+                  : pickup.cafe +
+                    "에 방문해 결제 내역을 보여 주시면 작품을 현장에서 전달해 드립니다."}
+              </p>
+            </div>
+          )}
           {snapshot?.store.address && <p>{snapshot.store.address}</p>}
           {snapshot?.store.hours && <p>운영 시간 · {snapshot.store.hours}</p>}
           {pickup.phone && (

@@ -91,15 +91,16 @@ export async function presentationRequest(
   }
   const current = session()
   if (!current) throw new Error("휴대폰 번호를 다시 확인해 주세요.")
-  if (path === "/api/orders")
+  const route = path.split("?")[0]
+  if (route === "/api/orders")
     return {
       orders: orders()
         .filter((order) => order.owner === current.phone)
         .map(({ owner, ...order }) => order)
         .reverse(),
     }
-  if (path.startsWith("/api/orders/")) {
-    const id = decodeURIComponent(path.slice("/api/orders/".length))
+  if (route.startsWith("/api/orders/")) {
+    const id = decodeURIComponent(route.slice("/api/orders/".length))
     const order = orders().find(
       (item) => item.id === id && item.owner === current.phone,
     )

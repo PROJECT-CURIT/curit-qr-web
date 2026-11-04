@@ -22,10 +22,28 @@ import {
   loadQrListing,
   paymentFailureFromSearch,
   PaymentWindowCancelledError,
+  readOrderReceipt,
   requestTossPayment,
   recordFieldProductPurchaseIntent,
   recordQrPurchaseIntent,
 } from "./commerce"
+
+describe("order receipts", () => {
+  it("keeps paid and cancelled receipts distinct and rejects pending checkout", () => {
+    const order = {
+      id: "QR-79c005f4-ead6-416e-9279-c29d855aae2a",
+      artworkId: "0-0",
+      quantity: 1,
+      amount: 55000,
+      paymentMethod: "카드",
+    }
+    expect(readOrderReceipt({ ...order, status: "paid" }).status).toBe("paid")
+    expect(readOrderReceipt({ ...order, status: "cancelled" }).status).toBe(
+      "cancelled",
+    )
+    expect(() => readOrderReceipt({ ...order, status: "pending" })).toThrow()
+  })
+})
 
 describe("payment return parsing", () => {
   it("extracts a valid failed Toss order for server cleanup", () => {

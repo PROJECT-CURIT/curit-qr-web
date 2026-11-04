@@ -46,10 +46,10 @@ function commerceUrl(path: string) {
   return url.toString()
 }
 
-export type PaidOrder = {
+export type OrderReceipt = {
   v?: 1
   id: string
-  status: "paid"
+  status: "paid" | "cancelled"
   artworkId: string
   quantity: number
   amount: number
@@ -215,12 +215,12 @@ export async function requestTossPayment(
   })
 }
 
-export function readPaidOrder(value: unknown): PaidOrder {
+export function readOrderReceipt(value: unknown): OrderReceipt {
   if (!value || typeof value !== "object")
     throw new Error("주문 내역을 확인하지 못했어요.")
   const order = value as Record<string, unknown>
   if (
-    order.status !== "paid" ||
+    (order.status !== "paid" && order.status !== "cancelled") ||
     typeof order.id !== "string" ||
     !order.id ||
     typeof order.artworkId !== "string" ||
@@ -249,7 +249,7 @@ export function readPaidOrder(value: unknown): PaidOrder {
   return {
     v: order.v === 1 ? 1 : undefined,
     id: order.id,
-    status: "paid",
+    status: order.status,
     artworkId: order.artworkId,
     quantity: Number(order.quantity),
     amount: order.amount,
