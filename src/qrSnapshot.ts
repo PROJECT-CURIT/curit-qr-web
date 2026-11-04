@@ -8,6 +8,7 @@ export type QrSnapshot = {
   requestId: string
   returnUrl: string
   saleStatus: "preparing" | "active"
+  saleEnded?: boolean
   store: {
     name: string
     phone: string
@@ -184,6 +185,7 @@ export function purchaseIssue(
   mode: string,
   end: string,
 ) {
+  if (snapshot?.saleEnded) return "전시가 종료된 작품이에요."
   if (snapshot && snapshot.saleStatus !== "active")
     return "판매 준비 중인 작품입니다."
   if (stock < 1) return "품절된 작품입니다."

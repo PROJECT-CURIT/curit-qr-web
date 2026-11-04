@@ -689,11 +689,13 @@ export default function App() {
               )}
               <div className="hero-copy">
                 <span className="hero-badge">
-                  {snapshot?.saleStatus === "preparing"
-                    ? "판매 준비 중"
-                    : product.stock === 0
-                      ? "품절"
-                      : "전시·판매 중"}
+                  {snapshot?.saleEnded
+                    ? "판매 종료"
+                    : snapshot?.saleStatus === "preparing"
+                      ? "판매 준비 중"
+                      : product.stock === 0
+                        ? "품절"
+                        : "전시·판매 중"}
                 </span>
                 <h1>{product.name}</h1>
                 {(detail?.description || product.project.desc) && (
@@ -754,11 +756,13 @@ export default function App() {
               <div className="price-row">
                 <strong>{money(product.price)}</strong>
                 <span className="stock-badge">
-                  {snapshot?.saleStatus === "preparing"
-                    ? "판매 준비 중"
-                    : product.stock < 1
-                      ? "품절"
-                      : "구매 가능"}
+                  {snapshot?.saleEnded
+                    ? "판매 종료"
+                    : snapshot?.saleStatus === "preparing"
+                      ? "판매 준비 중"
+                      : product.stock < 1
+                        ? "품절"
+                        : "구매 가능"}
                 </span>
               </div>
               <div className="tags">
@@ -1028,11 +1032,13 @@ export default function App() {
               onClick={openCheckout}
             >
               {issue
-                ? snapshot?.saleStatus === "preparing"
-                  ? "판매 준비 중"
-                  : product.stock < 1
-                    ? "품절"
-                    : "주문 불가"
+                ? snapshot?.saleEnded
+                  ? "판매 종료"
+                  : snapshot?.saleStatus === "preparing"
+                    ? "판매 준비 중"
+                    : product.stock < 1
+                      ? "품절"
+                      : "주문 불가"
                 : "주문하기"}{" "}
               <Icon name="arrow" size={19} />
             </button>
