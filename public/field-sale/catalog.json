@@ -33,14 +33,14 @@
       "name": "쭈꾸미 키링",
       "image": "jjukkumi-keyring-photo.jpg",
       "price": 2000,
-      "quantity": null,
+      "quantity": 1,
       "status": "PAUSED"
     },
     "tea-coaster": {
       "name": "티코스터",
       "image": "tea-coaster-photo.jpg",
       "price": 3000,
-      "quantity": null,
+      "quantity": 2,
       "status": "PAUSED"
     }
   }
