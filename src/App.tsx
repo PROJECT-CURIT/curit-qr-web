@@ -19,6 +19,7 @@ import {
 import GuestAccess from "./GuestAccess"
 import GuestOrders from "./GuestOrders"
 import PaymentSelect from "./PaymentSelect"
+import Modal from "./Modal"
 import { purchaseIssue, type QrSnapshot } from "./qrSnapshot"
 import { qrPath, readQrToken } from "./qrToken"
 
@@ -271,19 +272,6 @@ export default function App() {
     }
   }, [stage, qrToken])
   useEffect(() => {
-    if (!gallery) return
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setGallery(false)
-    }
-    window.addEventListener("keydown", escape)
-    return () => {
-      document.body.style.overflow = previousOverflow
-      window.removeEventListener("keydown", escape)
-    }
-  }, [gallery])
-  useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const paymentFailure = paymentFailureFromSearch(window.location.search)
     if (paymentFailure) {
@@ -346,6 +334,14 @@ export default function App() {
         setProductId(confirmed.artworkId)
         setQuantity(confirmed.quantity)
         setStage("complete")
+        if (paymentKey) {
+          params.delete("paymentKey")
+          params.delete("payment")
+          params.delete("amount")
+          params.delete("orderId")
+          params.set("order", confirmed.id)
+          window.history.replaceState(null, "", `?${params}`)
+        }
         window.scrollTo(0, 0)
       })
       .catch((error) => {
@@ -1344,12 +1340,20 @@ export default function App() {
       )}
       {!ordersOpen && stage === "confirming" && (
         <main className="complete payment-confirming">
-          <div className="session-loading" role="status">
-            <span className="loading-spinner" />
-            결제 내역을 확인하고 있어요.
-          </div>
-          <h1>잠시만 기다려 주세요.</h1>
-          <p>확인이 끝나면 주문 내역을 보여드릴게요.</p>
+          {busy && (
+            <div className="session-loading" role="status">
+              <span className="loading-spinner" />
+              결제 내역을 확인하고 있어요.
+            </div>
+          )}
+          <h1>
+            {busy ? "잠시만 기다려 주세요." : "결제 상태를 다시 확인해 주세요."}
+          </h1>
+          <p>
+            {busy
+              ? "확인이 끝나면 주문 내역을 보여드릴게요."
+              : "이미 결제했다면 아래에서 주문 내역을 먼저 확인해 주세요."}
+          </p>
           {paymentError && (
             <p className="payment-error" role="alert">
               {paymentError}
@@ -1492,107 +1496,93 @@ export default function App() {
         </main>
       )}
       {checkoutReview && (
-        <div
-          className="modal-backdrop"
-          onClick={() => {
-            if (!busy) setCheckoutReview(null)
-          }}
+        <Modal
+          className="payment-review"
+          labelledBy="payment-review-title"
+          busy={busy}
+          onClose={() => setCheckoutReview(null)}
         >
-          <section
-            className="modal payment-review"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="payment-review-title"
-            onClick={(event) => event.stopPropagation()}
+          <button
+            className="modal-close icon-button"
+            aria-label="닫기"
+            disabled={busy}
+            onClick={() => setCheckoutReview(null)}
           >
-            <button
-              className="modal-close icon-button"
-              aria-label="닫기"
-              disabled={busy}
-              onClick={() => setCheckoutReview(null)}
-            >
-              <Icon name="close" />
-            </button>
-            <h2 id="payment-review-title">주문 내용을 확인해 주세요</h2>
-            <div className="order-product">
-              <img src={product.img} alt={product.name} />
-              <div>
-                <small>{product.project.artist} 작가</small>
-                <strong>{product.name}</strong>
-                <p>
-                  {quantity}개 · {money(total)}
-                </p>
-              </div>
-            </div>
-            <dl>
-              <div>
-                <dt>결제 수단</dt>
-                <dd>{payment === "카드 결제" ? card + "카드" : wallet}</dd>
-              </div>
-              <div>
-                <dt>수령 방법</dt>
-                <dd>{pickupText}</dd>
-              </div>
-              <div className="total">
-                <dt>주문 금액</dt>
-                <dd>{money(total)}</dd>
-              </div>
-            </dl>
-            {paymentError && (
-              <p className="payment-error" role="alert">
-                {paymentError}
+            <Icon name="close" />
+          </button>
+          <h2 id="payment-review-title">주문 내용을 확인해 주세요</h2>
+          <div className="order-product">
+            <img src={product.img} alt={product.name} />
+            <div>
+              <small>{product.project.artist} 작가</small>
+              <strong>{product.name}</strong>
+              <p>
+                {quantity}개 · {money(total)}
               </p>
-            )}
-            <button
-              className="primary"
-              disabled={busy}
-              onClick={() => beginCheckout(checkoutReview.name)}
-            >
-              {busy ? "주문을 처리하고 있어요…" : "확인하고 주문하기"}
-            </button>
-          </section>
-        </div>
+            </div>
+          </div>
+          <dl>
+            <div>
+              <dt>결제 수단</dt>
+              <dd>{payment === "카드 결제" ? card + "카드" : wallet}</dd>
+            </div>
+            <div>
+              <dt>수령 방법</dt>
+              <dd>{pickupText}</dd>
+            </div>
+            <div className="total">
+              <dt>주문 금액</dt>
+              <dd>{money(total)}</dd>
+            </div>
+          </dl>
+          {paymentError && (
+            <p className="payment-error" role="alert">
+              {paymentError}
+            </p>
+          )}
+          <button
+            className="primary"
+            disabled={busy}
+            onClick={() => beginCheckout(checkoutReview.name)}
+          >
+            {busy ? "주문을 처리하고 있어요…" : "확인하고 주문하기"}
+          </button>
+        </Modal>
       )}
       {gallery && (
-        <div className="modal-backdrop" onClick={() => setGallery(false)}>
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-label="작가의 다른 작품들"
-            className="modal"
-            onClick={(event) => event.stopPropagation()}
+        <Modal labelledBy="gallery-title" onClose={() => setGallery(false)}>
+          <button
+            className="modal-close icon-button"
+            aria-label="닫기"
+            onClick={() => setGallery(false)}
           >
-            <button
-              className="modal-close icon-button"
-              aria-label="닫기"
-              onClick={() => setGallery(false)}
-            >
-              <Icon name="close" />
-            </button>
-            <h2>{product.project.artist} 작가의 다른 작품들</h2>
-            <div className="gallery-list">
-              {catalog
-                .filter((item) => item.project.id === product.project.id)
-                .map((item) => (
-                  <button
-                    className="related-item"
-                    key={item.id}
-                    onClick={() => selectProduct(item.id)}
-                  >
-                    <img src={item.img} alt={item.name} />
-                    <span>
-                      <small>{item.project.title}</small>
-                      <strong>{item.name}</strong>
-                      <b>{money(item.price)}</b>
-                    </span>
-                    {item.id === product.id && (
-                      <span className="current-product">현재 작품</span>
-                    )}
-                  </button>
-                ))}
-            </div>
-          </section>
-        </div>
+            <Icon name="close" />
+          </button>
+          <h2 id="gallery-title">
+            {product.project.artist} 작가의 다른 작품들
+          </h2>
+          <div className="gallery-list">
+            {catalog
+              .filter((item) => item.project.id === product.project.id)
+              .map((item) => (
+                <button
+                  className="related-item"
+                  key={item.id}
+                  onClick={() => selectProduct(item.id)}
+                >
+                  <img src={item.img} alt={item.name} />
+                  <span>
+                    <small>{item.project.title}</small>
+                    <strong>{item.name}</strong>
+                    <b>{money(item.price)}</b>
+                  </span>
+                  {item.id === product.id && (
+                    <span className="current-product">현재 작품</span>
+                  )}
+                </button>
+              ))}
+          </div>
+        </Modal>
       )}
       {toast && (
         <div className="toast" role="status">

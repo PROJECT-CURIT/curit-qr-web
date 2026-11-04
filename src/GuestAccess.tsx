@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 import { commerceRequest, isPresentation } from "./commerce"
+import Modal from "./Modal"
 
 type Props = {
   loading: boolean
@@ -18,29 +19,7 @@ export default function GuestAccess({
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
-  const dialogRef = useRef<HTMLElement>(null)
   const phoneValid = /^01[016789]\d{7,8}$/.test(phone)
-  useEffect(() => {
-    if (!open) return
-    const trigger = document.activeElement
-    dialogRef.current?.focus()
-    return () => {
-      if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus()
-    }
-  }, [open])
-  useEffect(() => {
-    if (!open) return
-    const previous = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-    const close = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !busy) setOpen(false)
-    }
-    window.addEventListener("keydown", close)
-    return () => {
-      document.body.style.overflow = previous
-      window.removeEventListener("keydown", close)
-    }
-  }, [open, busy])
   const confirm = async () => {
     if (busy || !phoneValid || !consent) return
     setBusy(true)
@@ -94,7 +73,7 @@ export default function GuestAccess({
           </span>
         </span>
       </header>
-      <main className="guest-access" inert={open}>
+      <main className="guest-access">
         <div className="access-symbol">큐릿</div>
         <h1>
           마음에 닿은 작품을,
@@ -177,51 +156,41 @@ export default function GuestAccess({
         <div className="access-footer">공간과 예술 사이, 큐릿</div>
       </main>
       {open && (
-        <div
-          className="modal-backdrop"
-          onClick={() => {
-            if (!busy) setOpen(false)
-          }}
+        <Modal
+          className="identity-modal"
+          labelledBy="identity-title"
+          busy={busy}
+          onClose={() => setOpen(false)}
         >
-          <section
-            className="modal identity-modal"
-            ref={dialogRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="identity-title"
-            onClick={(event) => event.stopPropagation()}
+          <button
+            className="modal-close icon-button"
+            aria-label="닫기"
+            disabled={busy}
+            onClick={() => setOpen(false)}
           >
-            <button
-              className="modal-close icon-button"
-              aria-label="닫기"
-              disabled={busy}
-              onClick={() => setOpen(false)}
-            >
-              ×
-            </button>
-            <span className="identity-kicker">연락처 확인</span>
-            <h2 id="identity-title">
-              주문 안내 연락처를
-              <br />
-              확인해 주세요.
-            </h2>
-            <p className="hint">
-              통신사 본인인증이 아닌 비회원 주문 연락처 확인 절차입니다.
+            ×
+          </button>
+          <span className="identity-kicker">연락처 확인</span>
+          <h2 id="identity-title">
+            주문 안내 연락처를
+            <br />
+            확인해 주세요.
+          </h2>
+          <p className="hint">
+            통신사 본인인증이 아닌 비회원 주문 연락처 확인 절차입니다.
+          </p>
+          <div className="identity-phone">
+            {phone.slice(0, 3)}-{phone.slice(3, -4)}-{phone.slice(-4)}
+          </div>
+          {message && (
+            <p className="access-message" role="status">
+              {message}
             </p>
-            <div className="identity-phone">
-              {phone.slice(0, 3)}-{phone.slice(3, -4)}-{phone.slice(-4)}
-            </div>
-            {message && (
-              <p className="access-message" role="status">
-                {message}
-              </p>
-            )}
-            <button className="primary" onClick={confirm} disabled={busy}>
-              {busy ? "확인 중…" : "확인하고 계속하기"}
-            </button>
-          </section>
-        </div>
+          )}
+          <button className="primary" onClick={confirm} disabled={busy}>
+            {busy ? "확인 중…" : "확인하고 계속하기"}
+          </button>
+        </Modal>
       )}
     </div>
   )

@@ -355,3 +355,16 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:#fff}body{ma
   .brand-note { padding: 16px 20px; }
   .app-checkout .toast { bottom: 30px; }
 }
+
+dialog.modal {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  border: 0;
+  color: inherit;
+  max-width: calc(100% - 2 * var(--page-gutter, 20px));
+  max-height: min(85dvh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px));
+  overscroll-behavior: contain;
+}
+
+dialog.modal::backdrop { background: #0008; }
