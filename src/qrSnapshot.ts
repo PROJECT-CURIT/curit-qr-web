@@ -1,3 +1,5 @@
+export const MAX_ORDER_QUANTITY = 20
+
 export type QrSnapshot = {
   v: 1
   qrToken?: string
@@ -187,6 +189,8 @@ export function purchaseIssue(
   if (stock < 1) return "품절된 작품입니다."
   if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > stock)
     return "남은 재고 내에서 수량을 선택해 주세요."
+  if (quantity > MAX_ORDER_QUANTITY)
+    return `한 주문에 최대 ${MAX_ORDER_QUANTITY}개까지 구매할 수 있어요.`
   if (mode === "exhibition" && !end)
     return "전시 종료일이 확인되면 주문할 수 있어요."
   return ""

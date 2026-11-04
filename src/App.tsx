@@ -19,7 +19,11 @@ import {
 import GuestAccess from "./GuestAccess"
 import GuestOrders from "./GuestOrders"
 import Modal from "./Modal"
-import { purchaseIssue, type QrSnapshot } from "./qrSnapshot"
+import {
+  MAX_ORDER_QUANTITY,
+  purchaseIssue,
+  type QrSnapshot,
+} from "./qrSnapshot"
 import { hasQrAddress, qrPath, readQrToken } from "./qrToken"
 
 const money = (value: number) => value.toLocaleString("ko-KR") + "원"
@@ -786,7 +790,9 @@ export default function App() {
                   <output>{quantity}</output>
                   <button
                     aria-label="수량 늘리기"
-                    disabled={quantity >= product.stock}
+                    disabled={
+                      quantity >= Math.min(product.stock, MAX_ORDER_QUANTITY)
+                    }
                     onClick={() => setQuantity(quantity + 1)}
                   >
                     +
@@ -1141,7 +1147,7 @@ export default function App() {
                 </section>
                 <section className="form-section payment-section">
                   <h2>
-                    03 <span>결제 수단</span>
+                    03 <span>토스 테스트 결제</span>
                   </h2>
                   <p className="hint">
                     토스 결제창에서 사용할 결제 수단을 선택해 주세요. 실제

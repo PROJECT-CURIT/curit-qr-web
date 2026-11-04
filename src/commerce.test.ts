@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { purchaseIssue } from "./qrSnapshot"
 
 const paymentMocks = vi.hoisted(() => ({
   load: vi.fn(),
@@ -275,5 +276,17 @@ describe("Toss widget payment window", () => {
       message: expect.stringContaining("결제를 취소했어요"),
     })
     expect(paymentMocks.requestPayment).not.toHaveBeenCalled()
+  })
+})
+
+describe("collaboration QR order boundaries", () => {
+  it("limits one order to 20 without hiding additional stock", () => {
+    expect(purchaseIssue(null, 25, 20, "immediate", "")).toBe("")
+    expect(purchaseIssue(null, 25, 21, "immediate", "")).toContain("최대 20개")
+  })
+
+  it("blocks sold-out products and reservations without an end date", () => {
+    expect(purchaseIssue(null, 0, 1, "immediate", "")).toContain("품절")
+    expect(purchaseIssue(null, 3, 1, "exhibition", "")).toContain("전시 종료일")
   })
 })
