@@ -34,6 +34,7 @@ export default function FieldSale() {
   const unit = id === "poetry-postcards" ? "장" : "개"
   const [config, setConfig] = useState<FieldSaleConfig | null>(null)
   const [error, setError] = useState("")
+  const [stockChanged, setStockChanged] = useState(false)
   const [attempt, setAttempt] = useState(0)
   const [quantity, setQuantity] = useState(() => {
     const previous = globalThis.history?.state?.curitTransferQuantity
@@ -77,7 +78,24 @@ export default function FieldSale() {
         if (!response.ok) throw new Error("판매 안내를 불러오지 못했어요.")
         return readFieldSaleConfig(await response.json())
       })
-      .then(setConfig)
+      .then((loaded) => {
+        const current = window.history.state
+        const stock = id ? loaded.products[id]?.quantity : null
+        if (
+          current?.curitTransfer &&
+          typeof stock === "number" &&
+          current.curitTransferQuantity > stock
+        ) {
+          window.history.replaceState(
+            { ...current, curitTransfer: false, curitTransferQuantity: null },
+            "",
+          )
+          setShowTransfer(false)
+          setQuantity(Math.max(1, stock))
+          setStockChanged(true)
+        }
+        setConfig(loaded)
+      })
       .catch((failure) => {
         if (!controller.signal.aborted)
           setError(
@@ -87,7 +105,7 @@ export default function FieldSale() {
           )
       })
     return () => controller.abort()
-  }, [product, attempt])
+  }, [product, id, attempt])
 
   useEffect(() => {
     if (!id) return
@@ -186,6 +204,7 @@ export default function FieldSale() {
 
   function openPurchase() {
     if (!id || !ready || window.history.state?.curitTransfer) return
+    setStockChanged(false)
     window.history.pushState(
       {
         ...window.history.state,
@@ -468,6 +487,11 @@ export default function FieldSale() {
               {shareMessage && (
                 <p className="field-copy-status" role="status">
                   {shareMessage}
+                </p>
+              )}
+              {stockChanged && (
+                <p className="payment-error" role="status">
+                  남은 수량이 달라졌어요. 수량을 확인한 뒤 다시 구매해 주세요.
                 </p>
               )}
               {support}
