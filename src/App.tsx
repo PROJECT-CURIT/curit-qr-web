@@ -39,6 +39,11 @@ type IconProps = {
   size?: number
 }
 
+type CheckoutAttempt = {
+  id: string
+  details: string
+}
+
 export function Icon({ name, size = 20 }: IconProps) {
   const paths: Record<string, string> = {
     back: "M15 5l-7 7 7 7",
@@ -125,6 +130,7 @@ export default function App() {
   const [paymentError, setPaymentError] = useState("")
   const confirmationStarted = useRef(false)
   const checkoutStarted = useRef(false)
+  const checkoutAttempt = useRef<CheckoutAttempt | null>(null)
   const abandonedOrder = useRef("")
   const [confirmationAttempt, setConfirmationAttempt] = useState(0)
   const [gallery, setGallery] = useState(false)
@@ -591,9 +597,14 @@ export default function App() {
     checkoutStarted.current = true
     setBusy(true)
     try {
+      const token = snapshot?.qrToken || qrToken || undefined
+      const details = JSON.stringify([token, product.id, quantity, name, phone])
+      if (checkoutAttempt.current?.details !== details)
+        checkoutAttempt.current = { id: crypto.randomUUID(), details }
       const result = await commerceRequest("/api/checkout", {
+        attemptId: checkoutAttempt.current.id,
         artworkId: product.id,
-        qrToken: snapshot?.qrToken || qrToken || undefined,
+        qrToken: token,
         quantity,
         name,
         phone,
@@ -613,6 +624,7 @@ export default function App() {
       }
     } catch (error) {
       if (error instanceof PaymentWindowCancelledError) {
+        checkoutAttempt.current = null
         await commerceRequest(
           `/api/checkout/${encodeURIComponent(error.orderId)}/abandon`,
           {},
