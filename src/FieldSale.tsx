@@ -35,12 +35,17 @@ export default function FieldSale() {
   const [config, setConfig] = useState<FieldSaleConfig | null>(null)
   const [error, setError] = useState("")
   const [attempt, setAttempt] = useState(0)
-  const [quantity, setQuantity] = useState(1)
+  const [quantity, setQuantity] = useState(() => {
+    const previous = globalThis.history?.state?.curitTransferQuantity
+    return Number.isSafeInteger(previous) && previous > 0 ? Number(previous) : 1
+  })
   const [tab, setTab] = useState<string>(tabs[0])
   const [copied, setCopied] = useState(false)
   const [copyMessage, setCopyMessage] = useState("")
   const [shareMessage, setShareMessage] = useState("")
-  const [showTransfer, setShowTransfer] = useState(false)
+  const [showTransfer, setShowTransfer] = useState(() =>
+    Boolean(globalThis.history?.state?.curitTransfer),
+  )
   const [viewCount, setViewCount] = useState<number | null>(null)
   const [purchaseIntentCount, setPurchaseIntentCount] = useState<number | null>(
     null,
@@ -122,6 +127,25 @@ export default function FieldSale() {
     }
   }, [showTransfer])
 
+  useEffect(() => {
+    const syncTransfer = () => {
+      const current = window.history.state
+      setShowTransfer(Boolean(current?.curitTransfer))
+      if (
+        current?.curitTransfer &&
+        Number.isSafeInteger(current.curitTransferQuantity)
+      )
+        setQuantity(current.curitTransferQuantity)
+    }
+    window.addEventListener("popstate", syncTransfer)
+    return () => window.removeEventListener("popstate", syncTransfer)
+  }, [])
+
+  function closeTransfer() {
+    if (window.history.state?.curitTransfer) window.history.back()
+    else setShowTransfer(false)
+  }
+
   async function copyAccount() {
     if (!ready || !config?.bank) return
     try {
@@ -161,7 +185,15 @@ export default function FieldSale() {
   }
 
   function openPurchase() {
-    if (!id || !ready) return
+    if (!id || !ready || window.history.state?.curitTransfer) return
+    window.history.pushState(
+      {
+        ...window.history.state,
+        curitTransfer: true,
+        curitTransferQuantity: quantity,
+      },
+      "",
+    )
     setShowTransfer(true)
     if (trackedCheckout.current !== id) {
       trackFieldSale("field_checkout_open", id)
@@ -184,7 +216,7 @@ export default function FieldSale() {
           <button
             className="icon-button header-back"
             aria-label="상품으로 돌아가기"
-            onClick={() => setShowTransfer(false)}
+            onClick={closeTransfer}
           >
             <Icon name="back" />
           </button>
@@ -193,7 +225,7 @@ export default function FieldSale() {
           className="wordmark"
           aria-label="큐릿 상품 상세"
           onClick={() => {
-            setShowTransfer(false)
+            closeTransfer()
             window.scrollTo(0, 0)
           }}
         >

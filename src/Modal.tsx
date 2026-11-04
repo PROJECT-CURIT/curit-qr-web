@@ -16,6 +16,8 @@ export default function Modal({
   children,
 }: Props) {
   const ref = useRef<HTMLDialogElement>(null)
+  const state = useRef({ busy, onClose })
+  state.current = { busy, onClose }
 
   useEffect(() => {
     const dialog = ref.current
@@ -23,11 +25,46 @@ export default function Modal({
     const previousOverflow = document.body.style.overflow
     dialog.showModal()
     document.body.style.overflow = "hidden"
+    const href = window.location.href
+    const marker = labelledBy
+    let mounted = true
+    queueMicrotask(() => {
+      if (mounted)
+        window.history.pushState(
+          { ...window.history.state, curitDialog: marker },
+          "",
+          href,
+        )
+    })
+    const handleBack = () => {
+      if (
+        window.location.href !== href ||
+        window.history.state?.curitDialog === marker
+      )
+        return
+      if (state.current.busy) {
+        window.history.pushState(
+          { ...window.history.state, curitDialog: marker },
+          "",
+          href,
+        )
+      } else {
+        state.current.onClose()
+      }
+    }
+    window.addEventListener("popstate", handleBack)
     return () => {
+      mounted = false
+      window.removeEventListener("popstate", handleBack)
+      if (
+        window.location.href === href &&
+        window.history.state?.curitDialog === marker
+      )
+        window.history.back()
       dialog.close()
       document.body.style.overflow = previousOverflow
     }
-  }, [])
+  }, [labelledBy])
 
   return (
     <dialog

@@ -110,11 +110,13 @@ export default function App() {
   const [quantity, setQuantity] = useState(1)
   const [tab, setTab] = useState("작품 이야기")
   const [agreed, setAgreed] = useState(false)
+  const [buyerName, setBuyerName] = useState("")
   const [busy, setBusy] = useState(false)
   const [checkoutReview, setCheckoutReview] = useState<{ name: string } | null>(
     null,
   )
-  const [toast, setToast] = useState("")
+  const [toast, setToast] = useState<{ message: string } | null>(null)
+  const showToast = (message: string) => setToast({ message })
   const [confirmedOrder, setConfirmedOrder] = useState<PaidOrder | null>(null)
   const [phone, setPhone] = useState("")
   const [verifiedPhone, setVerifiedPhone] = useState("")
@@ -164,19 +166,28 @@ export default function App() {
       active = false
     }
   }, [qrToken, listingAttempt])
-  const expireSession = useCallback(() => {
-    confirmationStarted.current = false
-    setSessionStatus("guest")
-    setVerifiedPhone("")
-    setPhone("")
-    setOrdersOpen(false)
-    setConfirmedOrder(null)
-    setStage("detail")
-    setAccessIntent("checkout")
-    setSessionError(
-      "연락처 유지 기간이 끝났어요. 휴대폰 번호를 다시 확인해 주세요.",
-    )
-  }, [])
+  const expireSession = useCallback(
+    (intent: "checkout" | "orders" = "checkout") => {
+      confirmationStarted.current = false
+      setSessionStatus("guest")
+      setVerifiedPhone("")
+      setPhone("")
+      setOrdersOpen(false)
+      setConfirmedOrder(null)
+      setStage("detail")
+      setCheckoutReview(null)
+      setAgreed(false)
+      setAccessIntent(intent)
+      setSessionError(
+        "연락처 유지 기간이 끝났어요. 휴대폰 번호를 다시 확인해 주세요.",
+      )
+    },
+    [],
+  )
+  const expireOrdersSession = useCallback(
+    () => expireSession("orders"),
+    [expireSession],
+  )
   const acceptSession = (authenticatedPhone: string) => {
     setPhone(authenticatedPhone)
     setVerifiedPhone(authenticatedPhone)
@@ -222,16 +233,27 @@ export default function App() {
   useEffect(() => {
     const handlePop = () => {
       const nextToken = readQrToken()
-      setQrToken(nextToken)
-      setSnapshot(null)
-      setProductId(
-        new URLSearchParams(window.location.search).get("artwork") || "0-0",
-      )
+      const nextArtwork =
+        new URLSearchParams(window.location.search).get("artwork") || "0-0"
+      if (nextToken === qrToken && (nextToken || nextArtwork === productId))
+        return
+      if (nextToken !== qrToken) {
+        setQrToken(nextToken)
+        setSnapshot(null)
+      }
+      setProductId(nextArtwork)
+      setBuyerName("")
+      setCheckoutReview(null)
+      setAgreed(false)
+      setPaymentError("")
       setStage("detail")
       setQuantity(1)
       setOrdersOpen(false)
     }
     window.addEventListener("popstate", handlePop)
+    return () => window.removeEventListener("popstate", handlePop)
+  }, [qrToken, productId])
+  useEffect(() => {
     if ("serviceWorker" in navigator) {
       if (import.meta.env.PROD)
         navigator.serviceWorker
@@ -247,13 +269,10 @@ export default function App() {
           )
           .catch(() => {})
     }
-    return () => {
-      window.removeEventListener("popstate", handlePop)
-    }
   }, [])
   useEffect(() => {
     if (toast) {
-      const timeout = setTimeout(() => setToast(""), 3000)
+      const timeout = setTimeout(() => setToast(null), 4000)
       return () => clearTimeout(timeout)
     }
   }, [toast])
@@ -330,6 +349,7 @@ export default function App() {
           throw new Error("작품 정보를 찾지 못했어요. 매장에 문의해 주세요.")
         setSnapshot(confirmed.snapshot || null)
         setConfirmedOrder(confirmed)
+        setBuyerName("")
         setProductId(confirmed.artworkId)
         setQuantity(confirmed.quantity)
         setStage("complete")
@@ -386,12 +406,23 @@ export default function App() {
   }
   const selectProduct = (id: string) => {
     if (snapshot) return
+    if (productId !== id) setBuyerName("")
     setProductId(id)
     setQuantity(1)
     setGallery(false)
     setTab("작품 이야기")
-    window.history.pushState({}, "", `?artwork=${id}`)
-    navigate("detail")
+    if (window.history.state?.curitDialog)
+      window.history.replaceState(
+        null,
+        "",
+        `?artwork=${encodeURIComponent(id)}`,
+      )
+    else
+      window.history.pushState(null, "", `?artwork=${encodeURIComponent(id)}`)
+    setStage("detail")
+    setAgreed(false)
+    setPaymentError("")
+    window.scrollTo(0, 0)
   }
   const share = async () => {
     const base = new URL(import.meta.env.BASE_URL, window.location.origin)
@@ -402,10 +433,10 @@ export default function App() {
       if (navigator.share) await navigator.share({ title: product?.name, url })
       else {
         await navigator.clipboard.writeText(url)
-        setToast("작품 링크를 복사했어요. QR에 이 주소를 사용하세요.")
+        showToast("작품 링크를 복사했어요. QR에 이 주소를 사용하세요.")
       }
     } catch {
-      setToast("공유가 취소되었거나 사용할 수 없어요.")
+      showToast("공유가 취소되었거나 사용할 수 없어요.")
     }
   }
   if (
@@ -447,6 +478,7 @@ export default function App() {
         loading={sessionStatus === "loading"}
         serviceError={sessionError}
         onVerified={acceptSession}
+        onBack={() => setAccessIntent(null)}
       />
     )
   if (!product)
@@ -528,8 +560,11 @@ export default function App() {
       setPaymentError("인터넷 연결을 확인해 주세요.")
       return
     }
-    const data = new FormData(event.currentTarget)
-    const name = String(data.get("name") || "")
+    const name = buyerName.trim()
+    if (!name || name.length > 40 || /[\u0000-\u001f\u007f]/.test(name)) {
+      setPaymentError("주문자 이름을 1~40자로 입력해 주세요.")
+      return
+    }
     if (isPresentation) {
       setCheckoutReview({ name })
       return
@@ -589,6 +624,7 @@ export default function App() {
         {(stage !== "detail" || ordersOpen) && (
           <button
             className="icon-button header-back"
+            disabled={busy}
             aria-label={
               ordersOpen ? "이전 화면으로 돌아가기" : "작품으로 돌아가기"
             }
@@ -601,6 +637,7 @@ export default function App() {
         )}
         <button
           className="wordmark"
+          disabled={busy}
           onClick={() => navigate("detail")}
           aria-label="CURI:T 큐릿 작품 상세"
         >
@@ -610,6 +647,7 @@ export default function App() {
         </button>
         <button
           className="order-history-link"
+          disabled={busy}
           onClick={() => {
             if (sessionStatus === "verified") setOrdersOpen(true)
             else setAccessIntent("orders")
@@ -630,13 +668,13 @@ export default function App() {
       {ordersOpen && (
         <GuestOrders
           phone={verifiedPhone}
-          onExpired={expireSession}
+          onExpired={expireOrdersSession}
           onOpen={(order) => {
             if (
               !order.snapshot &&
               !catalog.some((item) => item.id === order.artworkId)
             ) {
-              setToast("작품 정보를 찾지 못했어요. 매장에 문의해 주세요.")
+              showToast("작품 정보를 찾지 못했어요. 매장에 문의해 주세요.")
               return
             }
             setConfirmedOrder(order)
@@ -1134,6 +1172,9 @@ export default function App() {
                     <input
                       name="name"
                       autoComplete="name"
+                      readOnly={busy}
+                      value={buyerName}
+                      onChange={(event) => setBuyerName(event.target.value)}
                       required
                       placeholder="이름을 입력해 주세요"
                       maxLength={40}
@@ -1371,9 +1412,9 @@ export default function App() {
               onClick={async () => {
                 try {
                   await navigator.clipboard.writeText(confirmedOrder.id)
-                  setToast("주문 번호를 복사했어요.")
+                  showToast("주문 번호를 복사했어요.")
                 } catch {
-                  setToast(
+                  showToast(
                     "주문 번호는 상단 주문 내역에서 다시 확인할 수 있어요.",
                   )
                 }
@@ -1493,7 +1534,7 @@ export default function App() {
       )}
       {toast && (
         <div className="toast" role="status">
-          {toast}
+          {toast.message}
         </div>
       )}
     </div>

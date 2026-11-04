@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { commerceRequest, isPresentation } from "./commerce"
 import Modal from "./Modal"
 
@@ -6,22 +6,26 @@ type Props = {
   loading: boolean
   serviceError: string
   onVerified: (phone: string) => void
+  onBack: () => void
 }
 
 export default function GuestAccess({
   loading,
   serviceError,
   onVerified,
+  onBack,
 }: Props) {
   const [phone, setPhone] = useState("")
   const [consent, setConsent] = useState(false)
   const [remember, setRemember] = useState(true)
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const verifying = useRef(false)
   const [message, setMessage] = useState("")
   const phoneValid = /^01[016789]\d{7,8}$/.test(phone)
   const confirm = async () => {
-    if (busy || !phoneValid || !consent) return
+    if (verifying.current || !phoneValid || !consent) return
+    verifying.current = true
     setBusy(true)
     setMessage("")
     try {
@@ -61,12 +65,21 @@ export default function GuestAccess({
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "다시 시도해 주세요.")
     } finally {
+      verifying.current = false
       setBusy(false)
     }
   }
   return (
     <div className="app app-access">
-      <header className="header">
+      <header className="header app-navigation">
+        <button
+          className="icon-button header-back"
+          type="button"
+          aria-label="작품으로 돌아가기"
+          onClick={onBack}
+        >
+          <span aria-hidden="true">←</span>
+        </button>
         <span className="wordmark" aria-label="큐릿">
           <span className="brand-logo" aria-hidden="true">
             CURI:T
