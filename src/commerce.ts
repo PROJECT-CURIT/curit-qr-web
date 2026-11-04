@@ -55,6 +55,7 @@ export type PaidOrder = {
   amount: number
   paymentMethod: string
   simulated?: boolean
+  testPayment?: boolean
   pickupMode?: "immediate" | "exhibition"
   pickupDate?: string
   cafeName?: string
@@ -136,6 +137,8 @@ export async function requestTossPayment(
   phone: string,
 ) {
   const checkout = readTossCheckout(value)
+  if (!/^test_(g?ck)_.+/.test(checkout.clientKey))
+    throw new Error("안전한 결제 환경을 확인하지 못했어요.")
   const { ANONYMOUS, loadTossPayments } = await import(
     "@tosspayments/tosspayments-sdk"
   )
@@ -257,6 +260,7 @@ export function readPaidOrder(value: unknown): PaidOrder {
     customerLabel:
       typeof order.customerLabel === "string" ? order.customerLabel : undefined,
     simulated: order.simulated === true,
+    testPayment: order.testPayment === true,
     pickupMode:
       order.pickupMode === "exhibition"
         ? "exhibition"

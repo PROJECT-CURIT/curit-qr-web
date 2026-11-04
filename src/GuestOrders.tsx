@@ -100,11 +100,9 @@ export default function GuestOrders({ phone, onOpen, onExpired }: Props) {
               >
                 <div className="order-card-top">
                   <span>
-                    {order.snapshot
-                      ? "저장된 주문"
-                      : order.simulated
-                        ? "주문 접수"
-                        : "결제 완료"}
+                    {order.simulated || order.testPayment
+                      ? "주문 완료"
+                      : "결제 완료"}
                   </span>
                   <small>{order.id}</small>
                 </div>

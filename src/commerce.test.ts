@@ -251,6 +251,17 @@ describe("Toss widget payment window", () => {
     )
   })
 
+  it("rejects production keys before loading the payment SDK", async () => {
+    await expect(
+      requestTossPayment(
+        { ...checkout, clientKey: "live_gck_fixture" },
+        "card",
+        "01000000000",
+      ),
+    ).rejects.toThrow("안전한 결제 환경")
+    expect(paymentMocks.load).not.toHaveBeenCalled()
+  })
+
   it("returns control to the checkout when the buyer closes the window", async () => {
     const payment = requestTossPayment(checkout, "card", "01012345678")
     await vi.waitFor(() =>

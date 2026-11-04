@@ -25,6 +25,12 @@ export function readQrToken(pathname?: string, search?: string) {
   }
 }
 
+export function hasQrAddress(pathname: string, search: string) {
+  return (
+    new URLSearchParams(search).has("qr") || /(?:^|\/)q(?:\/|$)/.test(pathname)
+  )
+}
+
 export function qrPath(token: string) {
   if (!TOKEN_PATTERN.test(token))
     throw new Error("QR 토큰 형식이 올바르지 않아요.")

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { qrPath, readQrToken } from "./qrToken"
+import { hasQrAddress, qrPath, readQrToken } from "./qrToken"
 
 describe("product QR paths", () => {
   it("reads one opaque token from a product QR path", () => {
@@ -16,6 +16,12 @@ describe("product QR paths", () => {
     expect(readQrToken("/q/..%2Fadmin")).toBe("")
     expect(readQrToken("/q/short")).toBe("")
     expect(readQrToken("/curit-qr-web/", "?qr=short")).toBe("")
+  })
+
+  it("distinguishes malformed QR addresses from catalog links", () => {
+    expect(hasQrAddress("/curit-qr-web/", "?qr=")).toBe(true)
+    expect(hasQrAddress("/curit-qr-web/q/short", "")).toBe(true)
+    expect(hasQrAddress("/curit-qr-web/", "?artwork=0-0")).toBe(false)
   })
 
   it("builds a GitHub Pages-safe QR URL without embedding price or stock", () => {

@@ -18,10 +18,9 @@ import {
 } from "./commerce"
 import GuestAccess from "./GuestAccess"
 import GuestOrders from "./GuestOrders"
-import PaymentSelect from "./PaymentSelect"
 import Modal from "./Modal"
 import { purchaseIssue, type QrSnapshot } from "./qrSnapshot"
-import { qrPath, readQrToken } from "./qrToken"
+import { hasQrAddress, qrPath, readQrToken } from "./qrToken"
 
 const money = (value: number) => value.toLocaleString("ko-KR") + "원"
 const catalog = projects.flatMap((project) =>
@@ -106,7 +105,6 @@ export default function App() {
     useState<"detail" | "checkout" | "complete" | "confirming">("detail")
   const [quantity, setQuantity] = useState(1)
   const [tab, setTab] = useState("작품 이야기")
-  const [payment, setPayment] = useState("카드 결제")
   const [agreed, setAgreed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [checkoutReview, setCheckoutReview] = useState<{ name: string } | null>(
@@ -116,9 +114,6 @@ export default function App() {
   const [confirmedOrder, setConfirmedOrder] = useState<PaidOrder | null>(null)
   const [phone, setPhone] = useState("")
   const [verifiedPhone, setVerifiedPhone] = useState("")
-  const [card, setCard] = useState("")
-  const [installment, setInstallment] = useState("0")
-  const [wallet, setWallet] = useState("카카오페이")
   const [paymentError, setPaymentError] = useState("")
   const confirmationStarted = useRef(false)
   const checkoutStarted = useRef(false)
@@ -409,6 +404,16 @@ export default function App() {
       setToast("공유가 취소되었거나 사용할 수 없어요.")
     }
   }
+  if (
+    !qrToken &&
+    hasQrAddress(window.location.pathname, window.location.search)
+  )
+    return (
+      <main className="not-found">
+        <h1>구매 링크를 확인해 주세요</h1>
+        <p>매장에 비치된 QR 코드를 다시 스캔해 주세요.</p>
+      </main>
+    )
   if (listingStatus === "loading")
     return (
       <main className="not-found">
@@ -515,10 +520,6 @@ export default function App() {
       expireSession()
       return
     }
-    if (payment === "카드 결제" && !card) {
-      setPaymentError("결제할 카드사를 선택해 주세요.")
-      return
-    }
     if (!navigator.onLine && !isPresentation) {
       setPaymentError("인터넷 연결을 확인해 주세요.")
       return
@@ -540,12 +541,6 @@ export default function App() {
     checkoutStarted.current = true
     setBusy(true)
     try {
-      const paymentMethod =
-        payment === "카드 결제"
-          ? "card" as const
-          : wallet === "카카오페이"
-            ? "kakaopay" as const
-            : "tosspay" as const
       const result = await commerceRequest("/api/checkout", {
         artworkId: product.id,
         qrToken: snapshot?.qrToken || qrToken || undefined,
@@ -553,10 +548,7 @@ export default function App() {
         name,
         phone,
         fulfillment: "pickup",
-        paymentMethod,
-        cardIssuer: payment === "카드 결제" ? card : undefined,
-        installment:
-          payment === "카드 결제" && total >= 50000 ? installment : "0",
+        paymentMethod: "card",
         returnUrl: qrToken
           ? window.location.origin + qrPath(qrToken)
           : new URL(
@@ -565,7 +557,7 @@ export default function App() {
             ).href,
       })
       if (result?.payment) {
-        await requestTossPayment(result.payment, paymentMethod, phone)
+        await requestTossPayment(result.payment, "card", phone)
       } else {
         window.location.assign(checkoutDestination(result.checkoutUrl))
       }
@@ -1151,102 +1143,10 @@ export default function App() {
                   <h2>
                     03 <span>결제 수단</span>
                   </h2>
-                  <div className="payment-options">
-                    {["카드 결제", "간편결제"].map((method) => (
-                      <button
-                        type="button"
-                        key={method}
-                        aria-pressed={payment === method}
-                        className={payment === method ? "selected" : ""}
-                        onClick={() => setPayment(method)}
-                      >
-                        <span className="radio-dot" />
-                        {method}
-                      </button>
-                    ))}
-                  </div>
                   <p className="hint">
-                    시연 환경에서는 토스 테스트 결제창에서 결제수단을 최종
-                    선택합니다.
+                    토스 결제창에서 사용할 결제 수단을 선택해 주세요. 실제
+                    금액은 청구되지 않아요.
                   </p>
-                  {payment === "카드 결제" ? (
-                    <div className="card-options">
-                      <PaymentSelect
-                        label="카드사 선택"
-                        value={card}
-                        onChange={setCard}
-                        placeholder="결제할 카드사를 선택해 주세요"
-                        options={[
-                          "신한",
-                          "KB국민",
-                          "삼성",
-                          "현대",
-                          "롯데",
-                          "우리",
-                          "하나",
-                          "NH농협",
-                          "BC",
-                        ].map((issuer) => ({
-                          value: issuer,
-                          label: issuer + "카드",
-                        }))}
-                      />
-                      <PaymentSelect
-                        label="할부 선택"
-                        value={total < 50000 ? "0" : installment}
-                        onChange={setInstallment}
-                        options={[
-                          { value: "0", label: "일시불" },
-                          ...(total >= 50000
-                            ? [2, 3, 6, 12].map((months) => ({
-                                value: String(months),
-                                label: months + "개월",
-                              }))
-                            : []),
-                        ]}
-                      />
-                      <p className="hint">
-                        카드 정보는 카드사의 보안 결제창에서 입력합니다.
-                        <br />
-                        할부·수수료 조건은 결제창에서 확인해 주세요.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="wallet-options">
-                      {["카카오페이", "토스페이"].map((method) => (
-                        <button
-                          className={
-                            "wallet " +
-                            (method === "카카오페이" ? "kakao " : "toss ") +
-                            (wallet === method ? "selected" : "")
-                          }
-                          type="button"
-                          key={method}
-                          aria-pressed={wallet === method}
-                          onClick={() => setWallet(method)}
-                        >
-                          <img
-                            className={
-                              method === "카카오페이"
-                                ? "wallet-logo kakao-wordmark"
-                                : "wallet-logo"
-                            }
-                            src={
-                              method === "카카오페이"
-                                ? "/payments/kakaopay.svg"
-                                : "/payments/toss.png"
-                            }
-                            alt={method === "카카오페이" ? "카카오페이" : ""}
-                          />
-                          {method !== "카카오페이" && <strong>{method}</strong>}
-                          {wallet === method && <Icon name="check" size={17} />}
-                        </button>
-                      ))}
-                      <p className="hint">
-                        선택한 서비스의 결제창에서 인증 후 결제합니다.
-                      </p>
-                    </div>
-                  )}
                 </section>
               </div>
               <aside className="order-summary">
@@ -1318,8 +1218,7 @@ export default function App() {
                     busy ||
                     !agreed ||
                     !verifiedPhone ||
-                    verifiedPhone !== phone ||
-                    (payment === "카드 결제" && !card)
+                    verifiedPhone !== phone
                   }
                   type="submit"
                 >
@@ -1385,16 +1284,12 @@ export default function App() {
             이제 당신의 일상으로.
           </h1>
           <p>
-            {confirmedOrder.simulated ? (
-              "프로토타입 주문이 저장되었습니다. 실제 결제는 발생하지 않았습니다."
-            ) : (
-              <>
-                {product.project.artist} 작가의{" "}
-                {isExhibition ? "작품 구매 예약이" : "작품 주문이"}{" "}
-                완료되었습니다.
-              </>
-            )}
+            {product.project.artist} 작가의{" "}
+            {isExhibition ? "작품 구매 예약이" : "작품 주문이"} 완료되었습니다.
           </p>
+          {(confirmedOrder.simulated || confirmedOrder.testPayment) && (
+            <p>이 주문은 실제 금액이 청구되지 않았어요.</p>
+          )}
           <div className="receipt">
             <small>주문 번호</small>
             <strong>{confirmedOrder.id}</strong>
@@ -1427,7 +1322,7 @@ export default function App() {
                 <dd>{confirmedOrder.paymentMethod}</dd>
               </div>
               <div className="total">
-                <dt>결제 금액</dt>
+                <dt>주문 금액</dt>
                 <dd>{money(confirmedOrder.amount)}</dd>
               </div>
             </dl>
@@ -1524,7 +1419,7 @@ export default function App() {
           <dl>
             <div>
               <dt>결제 수단</dt>
-              <dd>{payment === "카드 결제" ? card + "카드" : wallet}</dd>
+              <dd>토스 결제창에서 선택</dd>
             </div>
             <div>
               <dt>수령 방법</dt>
