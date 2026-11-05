@@ -79,7 +79,9 @@ export function Icon({ name, size = 20 }: IconProps) {
 
 export default function App() {
   const [qrToken, setQrToken] = useState(readQrToken)
-  const [snapshot, setSnapshot] = useState<QrSnapshot | null>(null)
+  const [listingSnapshot, setListingSnapshot] = useState<QrSnapshot | null>(
+    null,
+  )
   const [listingStatus, setListingStatus] =
     useState<"idle" | "loading" | "ready" | "error">(
       qrToken ? "loading" : "idle",
@@ -89,6 +91,13 @@ export default function App() {
   const initialId =
     new URLSearchParams(window.location.search).get("artwork") || "0-0"
   const [productId, setProductId] = useState(initialId)
+  const [stage, setStage] =
+    useState<"detail" | "checkout" | "complete" | "confirming">("detail")
+  const [confirmedOrder, setConfirmedOrder] = useState<OrderReceipt | null>(
+    null,
+  )
+  const receipt = stage === "complete" ? confirmedOrder : null
+  const snapshot = receipt ? (receipt.snapshot ?? null) : listingSnapshot
   const product = snapshot
     ? {
         id: snapshot.product.artworkId,
@@ -109,9 +118,7 @@ export default function App() {
           installNote: snapshot.product.care,
         },
       }
-    : catalog.find((item) => item.id === productId)
-  const [stage, setStage] =
-    useState<"detail" | "checkout" | "complete" | "confirming">("detail")
+    : catalog.find((item) => item.id === (receipt?.artworkId ?? productId))
   const [quantity, setQuantity] = useState(1)
   const [tab, setTab] = useState("작품 이야기")
   const [agreed, setAgreed] = useState(false)
@@ -122,9 +129,6 @@ export default function App() {
   )
   const [toast, setToast] = useState<{ message: string } | null>(null)
   const showToast = (message: string) => setToast({ message })
-  const [confirmedOrder, setConfirmedOrder] = useState<OrderReceipt | null>(
-    null,
-  )
   const [phone, setPhone] = useState("")
   const [verifiedPhone, setVerifiedPhone] = useState("")
   const [paymentError, setPaymentError] = useState("")
@@ -156,13 +160,13 @@ export default function App() {
     loadQrListing(qrToken)
       .then((loaded) => {
         if (!active) return
-        setSnapshot(loaded)
+        setListingSnapshot(loaded)
         setProductId(loaded.product.artworkId)
         setListingStatus("ready")
       })
       .catch((error) => {
         if (!active) return
-        setSnapshot(null)
+        setListingSnapshot(null)
         setListingStatus("error")
         setListingError(
           error instanceof Error
@@ -247,7 +251,7 @@ export default function App() {
         return
       if (nextToken !== qrToken) {
         setQrToken(nextToken)
-        setSnapshot(null)
+        setListingSnapshot(null)
       }
       setProductId(nextArtwork)
       setBuyerName("")
@@ -318,8 +322,10 @@ export default function App() {
     const order = params.get("order") || params.get("orderId")
     const paymentKey = params.get("paymentKey")
     const amount = Number(params.get("amount"))
+    const paymentReturn =
+      paymentKey && Number.isSafeInteger(amount) && amount > 0
     if (
-      listingStatus === "error" ||
+      (!paymentReturn && qrToken && listingStatus !== "ready") ||
       sessionStatus !== "verified" ||
       !order ||
       confirmationStarted.current
@@ -329,25 +335,26 @@ export default function App() {
     setStage("confirming")
     setPaymentError("")
     setBusy(true)
-    const confirmation =
-      paymentKey && Number.isSafeInteger(amount) && amount > 0
-        ? commerceRequest("/api/payments/confirm", {
-            paymentKey,
-            orderId: order,
-            amount,
-          })
-        : commerceRequest(
-            "/api/orders/" + encodeURIComponent(order) + "?includeCancelled=1",
-          )
+    const confirmation = paymentReturn
+      ? commerceRequest("/api/payments/confirm", {
+          paymentKey,
+          orderId: order,
+          amount,
+        })
+      : commerceRequest(
+          "/api/orders/" + encodeURIComponent(order) + "?includeCancelled=1",
+        )
     confirmation
       .then((result) => {
         const confirmed = readOrderReceipt(result)
         if (
-          snapshot &&
-          (!confirmed.snapshot ||
-            confirmed.storeId !== snapshot.storeId ||
-            confirmed.requestId !== snapshot.requestId ||
-            confirmed.artworkId !== snapshot.product.artworkId)
+          qrToken &&
+          (listingSnapshot
+            ? !confirmed.snapshot ||
+              confirmed.storeId !== listingSnapshot.storeId ||
+              confirmed.requestId !== listingSnapshot.requestId ||
+              confirmed.artworkId !== listingSnapshot.product.artworkId
+            : confirmed.snapshot?.qrToken !== qrToken)
         )
           throw new Error(
             "이 구매 링크의 매장·상품과 주문 내역이 일치하지 않아요.",
@@ -357,11 +364,8 @@ export default function App() {
           !catalog.some((item) => item.id === confirmed.artworkId)
         )
           throw new Error("작품 정보를 찾지 못했어요. 매장에 문의해 주세요.")
-        setSnapshot(confirmed.snapshot || null)
         setConfirmedOrder(confirmed)
         setBuyerName("")
-        setProductId(confirmed.artworkId)
-        setQuantity(confirmed.quantity)
         setStage("complete")
         if (paymentKey) {
           params.delete("paymentKey")
@@ -388,14 +392,22 @@ export default function App() {
     expireSession,
     confirmationAttempt,
     listingStatus,
-    snapshot,
+    listingSnapshot,
+    qrToken,
   ])
   const navigate = (next: typeof stage) => {
-    const orderQr =
-      stage === "complete" ? confirmedOrder?.snapshot?.qrToken : undefined
-    if (next === "detail" && orderQr && orderQr !== qrToken) {
-      window.location.assign(qrPath(orderQr))
-      return
+    let detailProductId = productId
+    if (next === "detail" && receipt) {
+      const orderQr = receipt.snapshot?.qrToken ?? qrToken
+      if (orderQr) {
+        window.location.replace(qrPath(orderQr))
+        return
+      }
+      detailProductId = receipt.artworkId
+      setProductId(detailProductId)
+      setQuantity(1)
+      setBuyerName("")
+      setConfirmedOrder(null)
     }
     setStage(next)
     setOrdersOpen(false)
@@ -405,7 +417,9 @@ export default function App() {
       window.history.replaceState(
         {},
         "",
-        qrToken ? qrPath(qrToken) : "?artwork=" + encodeURIComponent(productId),
+        qrToken
+          ? qrPath(qrToken)
+          : "?artwork=" + encodeURIComponent(detailProductId),
       )
     window.scrollTo({ top: 0, behavior: "instant" })
   }
@@ -465,7 +479,8 @@ export default function App() {
         <p>매장에 비치된 QR 코드를 다시 스캔해 주세요.</p>
       </main>
     )
-  if (listingStatus === "loading")
+  const viewingOrder = stage === "confirming" || stage === "complete"
+  if (listingStatus === "loading" && !viewingOrder)
     return (
       <main className="not-found">
         <div className="session-loading" role="status">
@@ -474,7 +489,7 @@ export default function App() {
         </div>
       </main>
     )
-  if (listingStatus === "error")
+  if (listingStatus === "error" && !viewingOrder)
     return (
       <main className="not-found">
         <h1>구매 링크를 확인해 주세요</h1>
@@ -702,9 +717,6 @@ export default function App() {
             }
             confirmationStarted.current = true
             setConfirmedOrder(order)
-            setSnapshot(order.snapshot || null)
-            setProductId(order.artworkId)
-            setQuantity(order.quantity)
             setOrdersOpen(false)
             setStage("complete")
             window.history.replaceState(
