@@ -44,6 +44,13 @@ type CheckoutAttempt = {
   details: string
 }
 
+type OrderFlow = "checkout" | "orders"
+
+function readOrderFlow(): OrderFlow | null {
+  const flow = window.history.state?.curitOrderFlow
+  return flow === "checkout" || flow === "orders" ? flow : null
+}
+
 export function Icon({ name, size = 20 }: IconProps) {
   const paths: Record<string, string> = {
     back: "M15 5l-7 7 7 7",
@@ -91,8 +98,11 @@ export default function App() {
   const initialId =
     new URLSearchParams(window.location.search).get("artwork") || "0-0"
   const [productId, setProductId] = useState(initialId)
-  const [stage, setStage] =
-    useState<"detail" | "checkout" | "complete" | "confirming">("detail")
+  const [orderStage, setOrderStage] =
+    useState<"detail" | "complete" | "confirming">("detail")
+  const [flow, setFlow] = useState(readOrderFlow)
+  const stage =
+    flow === "checkout" && orderStage === "detail" ? "checkout" : orderStage
   const [confirmedOrder, setConfirmedOrder] = useState<OrderReceipt | null>(
     null,
   )
@@ -130,6 +140,7 @@ export default function App() {
   const [toast, setToast] = useState<{ message: string } | null>(null)
   const showToast = (message: string) => setToast({ message })
   const [phone, setPhone] = useState("")
+  const [contactDraft, setContactDraft] = useState("")
   const [verifiedPhone, setVerifiedPhone] = useState("")
   const [paymentError, setPaymentError] = useState("")
   const confirmationStarted = useRef(false)
@@ -141,12 +152,11 @@ export default function App() {
   const [sessionStatus, setSessionStatus] =
     useState<"loading" | "guest" | "verified">("loading")
   const [sessionError, setSessionError] = useState("")
-  const [ordersOpen, setOrdersOpen] = useState(false)
+  const ordersOpen = flow === "orders" && sessionStatus === "verified"
+  const accessIntent = sessionStatus === "verified" ? null : flow
   const [purchaseIntentCount, setPurchaseIntentCount] = useState<number | null>(
     null,
   )
-  const [accessIntent, setAccessIntent] =
-    useState<"checkout" | "orders" | null>(null)
   useEffect(() => {
     if (!qrToken) {
       setListingStatus("idle")
@@ -184,12 +194,11 @@ export default function App() {
       setSessionStatus("guest")
       setVerifiedPhone("")
       setPhone("")
-      setOrdersOpen(false)
       setConfirmedOrder(null)
-      setStage("detail")
+      setOrderStage("detail")
       setCheckoutReview(null)
       setAgreed(false)
-      setAccessIntent(intent)
+      setFlow(intent)
       setSessionError(
         "연락처 유지 기간이 끝났어요. 휴대폰 번호를 다시 확인해 주세요.",
       )
@@ -205,14 +214,9 @@ export default function App() {
     setVerifiedPhone(authenticatedPhone)
     setSessionError("")
     setSessionStatus("verified")
+    setContactDraft("")
     window.scrollTo(0, 0)
   }
-  useEffect(() => {
-    if (sessionStatus !== "verified" || !accessIntent) return
-    if (accessIntent === "checkout") setStage("checkout")
-    if (accessIntent === "orders") setOrdersOpen(true)
-    setAccessIntent(null)
-  }, [sessionStatus, accessIntent])
   useEffect(() => {
     let active = true
     setSessionStatus("loading")
@@ -247,24 +251,39 @@ export default function App() {
       const nextToken = readQrToken()
       const nextArtwork =
         new URLSearchParams(window.location.search).get("artwork") || "0-0"
-      if (nextToken === qrToken && (nextToken || nextArtwork === productId))
+      const nextFlow = readOrderFlow()
+      const sameProduct =
+        nextToken === qrToken && (nextToken || nextArtwork === productId)
+      if (sameProduct && busy && flow === "checkout" && nextFlow !== flow) {
+        window.history.pushState(
+          { curitOrderFlow: flow, curitOrderFlowBack: true },
+          "",
+        )
         return
+      }
+      setFlow(nextFlow)
+      if (sameProduct) {
+        if (flow !== nextFlow && !nextFlow) setAgreed(false)
+        return
+      }
       if (nextToken !== qrToken) {
         setQrToken(nextToken)
         setListingSnapshot(null)
       }
       setProductId(nextArtwork)
       setBuyerName("")
+      setContactDraft("")
       setCheckoutReview(null)
       setAgreed(false)
       setPaymentError("")
-      setStage("detail")
+      setOrderStage("detail")
       setQuantity(1)
-      setOrdersOpen(false)
+      setConfirmedOrder(null)
+      confirmationStarted.current = false
     }
     window.addEventListener("popstate", handlePop)
     return () => window.removeEventListener("popstate", handlePop)
-  }, [qrToken, productId])
+  }, [qrToken, productId, flow, busy])
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       if (import.meta.env.PROD)
@@ -305,7 +324,10 @@ export default function App() {
     const params = new URLSearchParams(window.location.search)
     const paymentFailure = paymentFailureFromSearch(window.location.search)
     if (paymentFailure) {
-      setStage("checkout")
+      if (!readOrderFlow()) {
+        window.history.replaceState({ curitOrderFlow: "checkout" }, "")
+        setFlow("checkout")
+      }
       setPaymentError(paymentFailure.message)
       if (
         paymentFailure.orderId &&
@@ -332,7 +354,7 @@ export default function App() {
     )
       return
     confirmationStarted.current = true
-    setStage("confirming")
+    setOrderStage("confirming")
     setPaymentError("")
     setBusy(true)
     const confirmation = paymentReturn
@@ -366,7 +388,8 @@ export default function App() {
           throw new Error("작품 정보를 찾지 못했어요. 매장에 문의해 주세요.")
         setConfirmedOrder(confirmed)
         setBuyerName("")
-        setStage("complete")
+        setOrderStage("complete")
+        setFlow(null)
         if (paymentKey) {
           params.delete("paymentKey")
           params.delete("payment")
@@ -383,7 +406,7 @@ export default function App() {
           expireSession()
           return
         }
-        setStage("confirming")
+        setOrderStage("confirming")
         setPaymentError(error.message)
       })
       .finally(() => setBusy(false))
@@ -395,9 +418,18 @@ export default function App() {
     listingSnapshot,
     qrToken,
   ])
-  const navigate = (next: typeof stage) => {
+  const openFlow = (next: OrderFlow) => {
+    if (readOrderFlow() === next) return
+    window.history.pushState(
+      { curitOrderFlow: next, curitOrderFlowBack: true },
+      "",
+    )
+    setFlow(next)
+    window.scrollTo({ top: 0, behavior: "instant" })
+  }
+  const returnToArtwork = () => {
     let detailProductId = productId
-    if (next === "detail" && receipt) {
+    if (receipt) {
       const orderQr = receipt.snapshot?.qrToken ?? qrToken
       if (orderQr) {
         window.location.replace(qrPath(orderQr))
@@ -409,30 +441,33 @@ export default function App() {
       setBuyerName("")
       setConfirmedOrder(null)
     }
-    setStage(next)
-    setOrdersOpen(false)
+    setOrderStage("detail")
+    setFlow(null)
     setAgreed(false)
     setPaymentError("")
-    if (next === "detail")
-      window.history.replaceState(
-        {},
-        "",
-        qrToken
-          ? qrPath(qrToken)
-          : "?artwork=" + encodeURIComponent(detailProductId),
-      )
+    window.history.replaceState(
+      {},
+      "",
+      qrToken
+        ? qrPath(qrToken)
+        : "?artwork=" + encodeURIComponent(detailProductId),
+    )
     window.scrollTo({ top: 0, behavior: "instant" })
+  }
+  const closeFlow = () => {
+    if (flow && window.history.state?.curitOrderFlowBack === true) {
+      window.history.back()
+      return
+    }
+    returnToArtwork()
   }
   const openCheckout = () => {
     if (qrToken)
       void recordQrPurchaseIntent(qrToken)
         .then(setPurchaseIntentCount)
         .catch(() => undefined)
-    if (sessionStatus === "verified") navigate("checkout")
-    else {
-      setAccessIntent("checkout")
-      window.scrollTo(0, 0)
-    }
+    setPaymentError("")
+    openFlow("checkout")
   }
   const selectProduct = (id: string) => {
     if (snapshot) return
@@ -449,7 +484,7 @@ export default function App() {
       )
     else
       window.history.pushState(null, "", `?artwork=${encodeURIComponent(id)}`)
-    setStage("detail")
+    setOrderStage("detail")
     setAgreed(false)
     setPaymentError("")
     window.scrollTo(0, 0)
@@ -508,8 +543,10 @@ export default function App() {
       <GuestAccess
         loading={sessionStatus === "loading"}
         serviceError={sessionError}
+        phone={contactDraft}
+        onPhoneChange={setContactDraft}
         onVerified={acceptSession}
-        onBack={() => setAccessIntent(null)}
+        onBack={closeFlow}
       />
     )
   if (!product)
@@ -666,9 +703,7 @@ export default function App() {
             aria-label={
               ordersOpen ? "이전 화면으로 돌아가기" : "작품으로 돌아가기"
             }
-            onClick={() =>
-              ordersOpen ? setOrdersOpen(false) : navigate("detail")
-            }
+            onClick={closeFlow}
           >
             <Icon name="back" />
           </button>
@@ -676,7 +711,7 @@ export default function App() {
         <button
           className="wordmark"
           disabled={busy}
-          onClick={() => navigate("detail")}
+          onClick={closeFlow}
           aria-label="CURI:T 큐릿 작품 상세"
         >
           <span className="brand-logo" aria-hidden="true">
@@ -686,11 +721,7 @@ export default function App() {
         <button
           className="order-history-link"
           disabled={busy}
-          onClick={() => {
-            if (sessionStatus === "verified") setOrdersOpen(true)
-            else setAccessIntent("orders")
-            window.scrollTo(0, 0)
-          }}
+          onClick={() => openFlow("orders")}
           aria-label="나의 주문 내역"
           aria-current={ordersOpen ? "page" : undefined}
         >
@@ -717,8 +748,8 @@ export default function App() {
             }
             confirmationStarted.current = true
             setConfirmedOrder(order)
-            setOrdersOpen(false)
-            setStage("complete")
+            setFlow(null)
+            setOrderStage("complete")
             window.history.replaceState(
               {},
               "",
@@ -1352,7 +1383,7 @@ export default function App() {
           >
             결제 상태 다시 확인
           </button>
-          <button className="text-link" onClick={() => setOrdersOpen(true)}>
+          <button className="text-link" onClick={() => openFlow("orders")}>
             나의 주문 내역 확인
           </button>
         </main>
@@ -1468,22 +1499,13 @@ export default function App() {
             >
               주문 번호 복사
             </button>
-            <button
-              className="text-link"
-              onClick={() => {
-                setOrdersOpen(true)
-                window.scrollTo(0, 0)
-              }}
-            >
+            <button className="text-link" onClick={() => openFlow("orders")}>
               나의 주문 내역
             </button>
           </div>
           <button
             className="primary return-to-artwork"
-            onClick={() => {
-              setAgreed(false)
-              navigate("detail")
-            }}
+            onClick={returnToArtwork}
           >
             작품으로 돌아가기 <Icon name="arrow" />
           </button>

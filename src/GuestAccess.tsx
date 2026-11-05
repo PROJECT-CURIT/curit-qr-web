@@ -5,6 +5,8 @@ import Modal from "./Modal"
 type Props = {
   loading: boolean
   serviceError: string
+  phone: string
+  onPhoneChange: (phone: string) => void
   onVerified: (phone: string) => void
   onBack: () => void
 }
@@ -12,10 +14,11 @@ type Props = {
 export default function GuestAccess({
   loading,
   serviceError,
+  phone,
+  onPhoneChange,
   onVerified,
   onBack,
 }: Props) {
-  const [phone, setPhone] = useState("")
   const [consent, setConsent] = useState(false)
   const [remember, setRemember] = useState(true)
   const [open, setOpen] = useState(false)
@@ -128,7 +131,7 @@ export default function GuestAccess({
               maxLength={13}
               required
               onChange={(event) =>
-                setPhone(event.target.value.replace(/\D/g, ""))
+                onPhoneChange(event.target.value.replace(/\D/g, ""))
               }
             />
             <label className="access-check">
